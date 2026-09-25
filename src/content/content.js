@@ -36,6 +36,7 @@ import {
   placeToastIfOpen,
   showToast,
 } from "./overlays.js";
+import { createDownloadControl } from "./download-control.js";
 
 (function () {
   // Where this runs is decided by the browser (manifest matches + sites the
@@ -49,7 +50,7 @@ import {
   if (window.__swiftSkip && window.__swiftSkip.alive()) return;
   window.__swiftSkip?.retire();
   for (const stale of document.querySelectorAll(
-    "#swiftskip-download-wrap, #swiftskip-osd, .swiftskip-sheet, .swiftskip-toast",
+    "#swiftskip-download, #swiftskip-download-wrap, #swiftskip-osd, .swiftskip-sheet, .swiftskip-toast",
   )) {
     stale.remove();
   }
@@ -80,8 +81,8 @@ import {
   function applySettings(next) {
     settings = next;
     setLanguage(settings.language);
-    // Relabel the idle download button in the new language.
-    if (downloadButtonEl && !isLectureDownloading) downloadButtonEl.textContent = t("downloadLecture");
+    // Relabel the download control in the new language.
+    downloadControl?.relabel();
     shortcutMap = buildShortcutMap(settings.shortcuts);
     if (!settings.enabled) closeShortcutSheet();
   }
@@ -99,17 +100,10 @@ import {
     barFillEl = null;
   let currentOsdType = null;
   let detectedLectureUrl = null;
-  let downloadWrapEl = null;
-  let downloadButtonEl = null;
-  let downloadDismissButtonEl = null;
-  let downloadProgressEl = null;
-  let downloadProgressFillEl = null;
-  let downloadProgressLabelEl = null;
-  let downloadProgressMetaEl = null;
+  let downloadControl = null; // see download-control.js
+  let downloadWrapEl = null; // downloadControl.el
   let downloadResetTimer = null;
   let activeDownloadJobId = null;
-  let isLectureDownloading = false;
-  let downloadDismissed = false;
   let hlsPerformanceObserver = null;
   let hlsMutationObserver = null;
   let hlsVideoPoll = null;
@@ -169,7 +163,6 @@ import {
     if (!isLectureManifestUrl(url)) return false;
 
     detectedLectureUrl = url;
-    downloadDismissed = false;
     injectDownloadButton();
 
     chrome.runtime.sendMessage({
@@ -301,7 +294,7 @@ import {
   let observedPlayer = null;
 
   function placeDownloadControl() {
-    if (!downloadWrapEl || downloadDismissed) return;
+    if (!downloadWrapEl) return;
 
     const parent = getDownloadParent();
     if (parent && downloadWrapEl.parentElement !== parent) {
@@ -318,224 +311,97 @@ import {
     positionOverPlayer(downloadWrapEl, "top-left");
   }
 
+  // Progress for this tab's download, from the background (or local events).
   function setDownloadProgress(progress) {
-    if (
-      progress.jobId &&
-      activeDownloadJobId &&
-      progress.jobId !== activeDownloadJobId
-    ) {
-      return;
-    }
-    if (!downloadProgressEl || !downloadProgressFillEl) return;
+    if (progress.jobId && activeDownloadJobId && progress.jobId !== activeDownloadJobId) return;
+    if (!downloadControl) return;
+    if (progress.jobId && !activeDownloadJobId && progress.active !== false) activeDownloadJobId = progress.jobId;
 
-    if (progress.jobId && !activeDownloadJobId) {
-      activeDownloadJobId = progress.jobId;
-    }
-    isLectureDownloading = progress.active !== false;
     clearTimeout(downloadResetTimer);
     placeDownloadControl();
+    downloadControl.update(progress);
+    wakeDownloadControl();
 
-    const percent = Math.max(
-      0,
-      Math.min(100, Math.round(Number(progress.percent) || 0)),
-    );
-    const phase = progress.phase || "Downloading";
-    const failed = phase === "Download failed";
-
-    downloadProgressEl.hidden = false;
-    downloadProgressEl.classList.toggle("swiftskip-download-failed", failed);
-    downloadProgressFillEl.style.width = `${failed ? 100 : percent}%`;
-    downloadProgressLabelEl.textContent = phaseLabel(phase);
-    downloadProgressMetaEl.textContent = formatProgressMeta(progress);
-    downloadProgressEl.title = errorText(progress);
-
-    if (downloadButtonEl) {
-      downloadButtonEl.disabled = isLectureDownloading;
-      downloadButtonEl.textContent =
-        percent > 0 && isLectureDownloading ? t("downloadingPercent", { percent }) : phaseLabel(phase);
-    }
-    if (downloadDismissButtonEl) {
-      const label = isLectureDownloading ? t("cancelDownload") : t("hideDownloadButton");
-      downloadDismissButtonEl.title = label;
-      downloadDismissButtonEl.setAttribute("aria-label", label);
-    }
-
-    if (progress.active === false && ["Complete", "Canceled", "Download failed"].includes(phase)) {
+    const { mode } = downloadControl;
+    if (mode === "done" || mode === "failed" || progress.phase === "Canceled") {
+      activeDownloadJobId = null;
       // Errors stay up longer so there's time to read them.
-      downloadResetTimer = setTimeout(resetDownloadProgress, failed ? 8000 : 1800);
+      downloadResetTimer = setTimeout(() => downloadControl.reset(), mode === "failed" ? 10000 : 2500);
     }
   }
 
-  function resetDownloadProgress() {
-    clearTimeout(downloadResetTimer);
-    if (!downloadProgressEl || !downloadProgressFillEl) return;
+  function startDownload() {
+    const jobId = createDownloadJobId();
+    activeDownloadJobId = jobId;
+    setDownloadProgress({ jobId, phase: "Preparing", percent: 0 });
 
-    downloadProgressEl.hidden = true;
-    downloadProgressEl.classList.remove("swiftskip-download-failed");
-    downloadProgressEl.title = "";
-    downloadProgressFillEl.style.width = "0%";
-    downloadProgressLabelEl.textContent = t("phasePreparing");
-    downloadProgressMetaEl.textContent = "0%";
-    isLectureDownloading = false;
-    activeDownloadJobId = null;
-
-    if (downloadButtonEl) {
-      downloadButtonEl.disabled = false;
-      downloadButtonEl.textContent = t("downloadLecture");
-    }
-    if (downloadDismissButtonEl) {
-      downloadDismissButtonEl.title = t("hideDownloadButton");
-      downloadDismissButtonEl.setAttribute("aria-label", t("hideDownloadButton"));
-    }
-  }
-
-  function hideDownloadControl() {
-    downloadDismissed = true;
-    resetDownloadProgress();
-    if (downloadWrapEl && downloadWrapEl.isConnected) {
-      downloadWrapEl.remove();
-    }
+    // Progress (including "Complete" / "Download failed") arrives via
+    // lectureDownloadProgress messages; the reply only matters if the
+    // background couldn't be reached at all.
+    chrome.runtime.sendMessage(
+      { action: "startLectureDownload", jobId, url: detectedLectureUrl, title: getPageTitle() },
+      (response) => {
+        if (chrome.runtime.lastError || !response) {
+          setDownloadProgress({
+            jobId,
+            phase: "Download failed",
+            active: false,
+            error: "SwiftSkip's background script didn't respond.",
+            errorCode: "errNoBackground",
+          });
+        }
+      },
+    );
   }
 
   function cancelActiveDownload() {
-    if (!activeDownloadJobId) {
-      hideDownloadControl();
-      return;
-    }
-
     const jobId = activeDownloadJobId;
-    if (downloadButtonEl) {
-      downloadButtonEl.disabled = true;
-      downloadButtonEl.textContent = t("phaseCanceling");
-    }
-    setDownloadProgress({ jobId, phase: "Canceling", percent: 0 });
-
-    chrome.runtime.sendMessage(
-      {
-        action: "cancelLectureDownload",
-        jobId,
-      },
-      () => {
-        resetDownloadProgress();
-        showOSD("download", null, t("downloadCanceled"));
-      },
-    );
+    if (!jobId) return;
+    downloadControl.update({ jobId, phase: "Canceling", percent: 0, active: true });
+    chrome.runtime.sendMessage({ action: "cancelLectureDownload", jobId }, () => {
+      void chrome.runtime.lastError;
+      activeDownloadJobId = null;
+      downloadControl.reset();
+    });
   }
 
   function injectDownloadButton() {
-    if (!SUPPORTS_DOWNLOAD || !detectedLectureUrl || downloadDismissed) return;
+    if (!SUPPORTS_DOWNLOAD || !detectedLectureUrl) return;
 
-    if (!downloadWrapEl) {
-      downloadWrapEl = document.createElement("div");
-      downloadWrapEl.id = "swiftskip-download-wrap";
-
-      const downloadActionsEl = document.createElement("div");
-      downloadActionsEl.className = "swiftskip-download-actions";
-
-      downloadButtonEl = document.createElement("button");
-      downloadButtonEl.id = "swiftskip-download-btn";
-      downloadButtonEl.type = "button";
-      downloadButtonEl.textContent = t("downloadLecture");
-      downloadButtonEl.title = t("downloadLectureTitle");
-
-      downloadDismissButtonEl = document.createElement("button");
-      downloadDismissButtonEl.id = "swiftskip-download-dismiss";
-      downloadDismissButtonEl.type = "button";
-      downloadDismissButtonEl.setAttribute("aria-label", t("hideDownloadButton"));
-      downloadDismissButtonEl.title = t("hideDownloadButton");
-      downloadDismissButtonEl.textContent = "\u00d7";
-
-      downloadProgressEl = document.createElement("div");
-      downloadProgressEl.id = "swiftskip-download-progress";
-      downloadProgressEl.hidden = true;
-
-      const progressTopEl = document.createElement("div");
-      progressTopEl.className = "swiftskip-download-progress-top";
-
-      downloadProgressLabelEl = document.createElement("span");
-      downloadProgressLabelEl.className = "swiftskip-download-progress-label";
-      downloadProgressLabelEl.textContent = t("phasePreparing");
-
-      downloadProgressMetaEl = document.createElement("span");
-      downloadProgressMetaEl.className = "swiftskip-download-progress-meta";
-      downloadProgressMetaEl.textContent = "0%";
-
-      const progressTrackEl = document.createElement("div");
-      progressTrackEl.className = "swiftskip-download-progress-track";
-
-      downloadProgressFillEl = document.createElement("div");
-      downloadProgressFillEl.className = "swiftskip-download-progress-fill";
-
-      progressTopEl.appendChild(downloadProgressLabelEl);
-      progressTopEl.appendChild(downloadProgressMetaEl);
-      progressTrackEl.appendChild(downloadProgressFillEl);
-      downloadProgressEl.appendChild(progressTopEl);
-      downloadProgressEl.appendChild(progressTrackEl);
-
-      downloadActionsEl.appendChild(downloadButtonEl);
-      downloadActionsEl.appendChild(downloadDismissButtonEl);
-      downloadWrapEl.appendChild(downloadActionsEl);
-      downloadWrapEl.appendChild(downloadProgressEl);
-
-      downloadButtonEl.addEventListener("click", () => {
-        if (isLectureDownloading) return;
-
-        activeDownloadJobId = createDownloadJobId();
-        isLectureDownloading = true;
-        clearTimeout(downloadResetTimer);
-        downloadButtonEl.disabled = true;
-        if (downloadDismissButtonEl) {
-          downloadDismissButtonEl.title = t("cancelDownload");
-          downloadDismissButtonEl.setAttribute("aria-label", t("cancelDownload"));
-        }
-        setDownloadProgress({
-          jobId: activeDownloadJobId,
-          phase: "Preparing",
-          percent: 0,
-        });
-        showOSD("download", null, t("preparingDownload"));
-
-        // Progress (including "Complete" / "Download failed") arrives via
-        // lectureDownloadProgress messages; the reply only matters if the
-        // background couldn't be reached at all.
-        chrome.runtime.sendMessage(
-          {
-            action: "startLectureDownload",
-            jobId: activeDownloadJobId,
-            url: detectedLectureUrl,
-            title: getPageTitle(),
-          },
-          (response) => {
-            if (chrome.runtime.lastError || !response) {
-              setDownloadProgress({
-                jobId: activeDownloadJobId,
-                phase: "Download failed",
-                error: "SwiftSkip's background script didn't respond.",
-                errorCode: "errNoBackground",
-                active: false,
-              });
-              return;
-            }
-            const state = response.state || {};
-            if (state.phase === "Complete") showOSD("download", null, t("downloadSaved"));
-          },
-        );
+    if (!downloadControl) {
+      downloadControl = createDownloadControl({
+        onDownload: startDownload,
+        onCancel: cancelActiveDownload,
+        // Remembered across lectures: collapsed stays collapsed.
+        onCollapseChange: (collapsed) => chrome.storage.local.set({ downloadCollapsed: collapsed }),
       });
-
-      downloadDismissButtonEl.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (isLectureDownloading) {
-          cancelActiveDownload();
-          return;
-        }
-
-        hideDownloadControl();
+      downloadWrapEl = downloadControl.el;
+      chrome.storage.local.get("downloadCollapsed", (stored) => {
+        void chrome.runtime.lastError;
+        if (stored && stored.downloadCollapsed) downloadControl.setCollapsed(true);
       });
     }
 
     placeDownloadControl();
+    wakeDownloadControl();
   }
+
+  // Like the player's own controls: fade out while the video plays and the
+  // mouse rests; any mouse movement (or pausing) brings it back.
+  let idleTimer = null;
+  function wakeDownloadControl() {
+    if (!downloadWrapEl) return;
+    downloadWrapEl.classList.remove("is-idle");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      const video = getVideo();
+      const hideable =
+        video && !video.paused && downloadControl.mode === "idle" &&
+        !downloadWrapEl.matches(":hover, :focus-within");
+      if (hideable) downloadWrapEl.classList.add("is-idle");
+    }, 3000);
+  }
+  document.addEventListener("mousemove", wakeDownloadControl, { passive: true });
 
   // ─── OSD parent: must live inside the fullscreen element to show in fullscreen
   function getOSDParent() {
@@ -673,7 +539,8 @@ import {
       skipAccumulator = accumulateSkip(skipAccumulator, moved);
     }
     const position = Number.isFinite(v.duration) && v.duration > 0 ? time / v.duration : null;
-    showOSD("skip", null, formatSkipTotal(skipAccumulator), position);
+    const direction = (skipAccumulator || seconds) > 0 ? "forward" : "backward";
+    showOSD("skip", direction, formatSkipTotal(skipAccumulator), position);
   }
 
   function changeVolume(delta) {
@@ -1062,6 +929,9 @@ import {
       save();
     });
     v.addEventListener("pause", save);
+    // Show the download control again when paused; start its idle timer on play.
+    v.addEventListener("pause", wakeDownloadControl);
+    v.addEventListener("play", wakeDownloadControl);
     v.addEventListener("seeked", save);
     v.addEventListener("ended", () => key && clearResumePosition(key).catch(() => {}));
     window.addEventListener("pagehide", save);

@@ -8,11 +8,10 @@
   "enableOn": "Aanzetten op",
   "enableNote": "Enkel deze site. Je kan ze in de instellingen weer verwijderen.",
   "lectureRecording": "Lesopname",
-  "downloadLecture": "Les downloaden",
+  "downloadLecture": "Downloaden",
   "downloadLectureTitle": "Deze les downloaden",
   "tryAgain": "Opnieuw proberen",
   "cancelDownload": "Download annuleren",
-  "hideDownloadButton": "Downloadknop verbergen",
   "savedToDownloads": "Opgeslagen in Downloads",
   "showInFolder": "Toon in map",
   "speed": "Snelheid",
@@ -127,5 +126,8 @@
   "welcomeStep3Title": "Zet SwiftSkip vast in je werkbalk",
   "welcomeStep3": "Klik op het puzzelstukje naast de adresbalk en zet SwiftSkip vast. Via het menu download je de les, verander je de snelheid en open je de instellingen.",
   "openSettings": "Instellingen openen",
-  "keySpace": "Spatie"
+  "keySpace": "Spatie",
+  "downloadSavedShort": "Opgeslagen",
+  "minimize": "Minimaliseren",
+  "expand": "klik om uit te klappen"
 }

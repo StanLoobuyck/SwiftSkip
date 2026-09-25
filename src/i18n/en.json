@@ -8,11 +8,10 @@
   "enableOn": "Enable on",
   "enableNote": "Only this site. You can remove it again in Settings.",
   "lectureRecording": "Lecture recording",
-  "downloadLecture": "Download lecture",
+  "downloadLecture": "Download",
   "downloadLectureTitle": "Download this lecture",
   "tryAgain": "Try again",
   "cancelDownload": "Cancel download",
-  "hideDownloadButton": "Hide download button",
   "savedToDownloads": "Saved to Downloads",
   "showInFolder": "Show in folder",
   "speed": "Speed",
@@ -127,5 +126,8 @@
   "welcomeStep3Title": "Pin SwiftSkip to your toolbar",
   "welcomeStep3": "Click the puzzle-piece icon next to the address bar and pin SwiftSkip. Its menu lets you download the lecture, change the speed and open the settings.",
   "openSettings": "Open settings",
-  "keySpace": "Space"
+  "keySpace": "Space",
+  "downloadSavedShort": "Saved",
+  "minimize": "Minimize",
+  "expand": "click to expand"
 }
