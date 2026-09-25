@@ -42,3 +42,59 @@ test("formatSkipTotal", () => {
   assert.equal(formatSkipTotal(-4.4), "−4s");
   assert.equal(formatSkipTotal(0.3), "0s");
 });
+
+import { formatSpeed, formatTime, isResumable, nextSpeed, resumeKey } from "../src/shared/playback.js";
+
+test("nextSpeed steps on a 0.25 grid, within 0.25–4", () => {
+  assert.equal(nextSpeed(1, +1, 0.25), 1.25);
+  assert.equal(nextSpeed(1.25, -1, 0.25), 1);
+  assert.equal(nextSpeed(3.75, +1, 0.25), 4);
+  assert.equal(nextSpeed(4, +1, 0.25), 4);
+  assert.equal(nextSpeed(0.25, -1, 0.25), 0.25);
+});
+
+test("nextSpeed with 0.1 steps has no floating-point drift", () => {
+  let rate = 1;
+  for (let i = 0; i < 7; i++) rate = nextSpeed(rate, +1, 0.1);
+  assert.equal(rate, 1.7);
+  for (let i = 0; i < 7; i++) rate = nextSpeed(rate, -1, 0.1);
+  assert.equal(rate, 1);
+});
+
+test("nextSpeed snaps an off-grid speed to the next grid value", () => {
+  assert.equal(nextSpeed(1.3, +1, 0.25), 1.5);
+  assert.equal(nextSpeed(1.3, -1, 0.25), 1.25);
+  assert.equal(nextSpeed(NaN, +1, 0.25), 1.25);
+});
+
+test("formatSpeed", () => {
+  assert.equal(formatSpeed(1), "1×");
+  assert.equal(formatSpeed(1.5), "1.5×");
+  assert.equal(formatSpeed(1.25), "1.25×");
+  assert.equal(formatSpeed(1.7000000000000002), "1.7×");
+});
+
+test("formatTime", () => {
+  assert.equal(formatTime(0), "0:00");
+  assert.equal(formatTime(75.9), "1:15");
+  assert.equal(formatTime(3723), "1:02:03");
+});
+
+test("isResumable skips the first and last 30 s", () => {
+  assert.equal(isResumable(10, 6000), false);
+  assert.equal(isResumable(600, 6000), true);
+  assert.equal(isResumable(5980, 6000), false);
+  assert.equal(isResumable(600, NaN), true);
+});
+
+test("resumeKey prefers Kaltura's entry id", () => {
+  assert.equal(
+    resumeKey({ pageUrl: "https://kaltura-kaf.edu.kuleuven.cloud/browseandembed/index/media-redirect/entryid/1_u30ck2k0/show", duration: 6821 }),
+    "kaltura:1_u30ck2k0",
+  );
+  assert.equal(
+    resumeKey({ pageUrl: "https://x.example/player", manifestUrl: "https://cdn/p/1/playManifest/entryId/0_AbC123/format/applehttp/a.m3u8" }),
+    "kaltura:0_abc123",
+  );
+  assert.equal(resumeKey({ pageUrl: "http://localhost:8123/?toolTitle=x", duration: 120.08 }), "page:localhost:8123/:120");
+});

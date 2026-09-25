@@ -1,11 +1,40 @@
-// SwiftSkip Video Controller v3 — content script
-// ← → skip | ↑ ↓ volume | [ ] speed | Space/K pause | M mute | F fullscreen | 0-9 seek%
+// SwiftSkip content script — runs in every frame of Toledo pages.
+// Keyboard shortcuts, the on-screen overlay, resume/speed memory, and the
+// lecture download button. Shortcuts are configurable (see shared/shortcuts.js).
 
-import { DEFAULT_KEYBINDS, DEFAULT_SKIP, SUPPORTS_DOWNLOAD } from "../shared/settings.js";
+import { DEFAULT_SETTINGS } from "../shared/settings.js";
+import { SUPPORTS_DOWNLOAD } from "../shared/features.js";
+import {
+  clearResumePosition,
+  getResumePosition,
+  loadSettings,
+  pruneResumePositions,
+  setResumePosition,
+  watchSettings,
+} from "../shared/storage.js";
+import { NO_REPEAT, buildShortcutMap, findAction } from "../shared/shortcuts.js";
 import { isLectureManifestUrl } from "../shared/hls.js";
 import { formatProgressMeta } from "../shared/format.js";
-import { accumulateSkip, computeSkip, formatSkipTotal } from "../shared/playback.js";
+import {
+  MAX_SPEED,
+  accumulateSkip,
+  computeSkip,
+  formatSkipTotal,
+  formatSpeed,
+  formatTime,
+  isResumable,
+  nextSpeed,
+  resumeKey,
+} from "../shared/playback.js";
 import { parseCourseTitle } from "../shared/filename.js";
+import {
+  closeShortcutSheet,
+  isShortcutSheetOpen,
+  openShortcutSheet,
+  placeSheetIfOpen,
+  placeToastIfOpen,
+  showToast,
+} from "./overlays.js";
 
 (function () {
   // ─── domain check ──────────────────────────────────────────────────────────
@@ -63,23 +92,18 @@ import { parseCourseTitle } from "../shared/filename.js";
   // Lets the local test page see that the dev build is active.
   if (__DEV__) document.documentElement.dataset.swiftskipDev = "loaded";
 
-  // ─── Config ────────────────────────────────────────────────────────────────
-  const config = { skipSeconds: DEFAULT_SKIP, enabled: true };
+  // ─── Settings ──────────────────────────────────────────────────────────────
+  // Changes made anywhere (popup, settings page, other tabs) apply immediately.
+  let settings = DEFAULT_SETTINGS;
+  let shortcutMap = buildShortcutMap(settings.shortcuts);
 
-  let keybinds = { ...DEFAULT_KEYBINDS };
-
-  chrome.storage.sync.get(["skipSeconds", "enabled", "keybinds"], (s) => {
-    if (s.skipSeconds !== undefined) config.skipSeconds = s.skipSeconds;
-    if (s.enabled !== undefined) config.enabled = s.enabled;
-    if (s.keybinds) {
-      keybinds = { ...DEFAULT_KEYBINDS, ...s.keybinds };
-    }
-  });
-
-  chrome.storage.onChanged.addListener((changes) => {
-    if (changes.skipSeconds) config.skipSeconds = changes.skipSeconds.newValue;
-    if (changes.enabled) config.enabled = changes.enabled.newValue;
-  });
+  function applySettings(next) {
+    settings = next;
+    shortcutMap = buildShortcutMap(settings.shortcuts);
+    if (!settings.enabled) closeShortcutSheet();
+  }
+  loadSettings().then(applySettings, () => {});
+  watchSettings(applySettings);
 
   // ─── State ─────────────────────────────────────────────────────────────────
   let skipAccumulator = 0;
@@ -266,6 +290,10 @@ import { parseCourseTitle } from "../shared/filename.js";
     if (placement === "center") {
       el.style.left = `${rect.left + rect.width / 2}px`;
       el.style.top = `${rect.top + rect.height / 2}px`;
+    } else if (placement === "bottom") {
+      // Above the player's own control bar.
+      el.style.left = `${rect.left + rect.width / 2}px`;
+      el.style.top = `${rect.bottom - 72}px`;
     } else {
       el.style.left = `${rect.left + 18}px`;
       el.style.top = `${rect.top + 18}px`;
@@ -279,6 +307,8 @@ import { parseCourseTitle } from "../shared/filename.js";
       positionFrame = null;
       if (downloadWrapEl && downloadWrapEl.isConnected) positionOverPlayer(downloadWrapEl, "top-left");
       if (osdEl && osdEl.isConnected && osdEl.style.display !== "none") positionOverPlayer(osdEl, "center");
+      placeSheetIfOpen((el) => positionOverPlayer(el, "center"));
+      placeToastIfOpen((el) => positionOverPlayer(el, "bottom"));
     });
   }
   window.addEventListener("scroll", schedulePositionUpdate, { capture: true, passive: true });
@@ -587,6 +617,15 @@ import { parseCourseTitle } from "../shared/filename.js";
     reset: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>`,
   };
 
+  // Parsed as SVG (not innerHTML) — the strings above are constants.
+  const svgParser = new DOMParser();
+  function svgIcon(name) {
+    return document.importNode(
+      svgParser.parseFromString(ICONS[name].replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '), "image/svg+xml").documentElement,
+      true,
+    );
+  }
+
   // ─── Show OSD ───────────────────────────────────────────────────────────────
   // barValue: 0–1 fills the progress bar (null = hide bar)
   function showOSD(type, icon, label, barValue = null) {
@@ -595,11 +634,11 @@ import { parseCourseTitle } from "../shared/filename.js";
     const isSameType = currentOsdType === type;
     currentOsdType = type;
 
-    if (icon) {
-      iconEl.innerHTML = ICONS[icon] || "";
+    iconEl.replaceChildren();
+    if (icon && ICONS[icon]) {
+      iconEl.append(svgIcon(icon));
       iconEl.style.display = "flex";
     } else {
-      iconEl.innerHTML = "";
       iconEl.style.display = "none";
     }
 
@@ -664,33 +703,26 @@ import { parseCourseTitle } from "../shared/filename.js";
     showOSD("volume", icon, `${pct}%`, v.volume);
   }
 
-  const SPEED_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+  function setSpeed(v, rate, icon) {
+    v.playbackRate = rate;
+    showOSD("speed", icon, formatSpeed(rate), rate / MAX_SPEED);
+    if (settings.rememberSpeed && rate !== settings.preferredSpeed) {
+      settings = { ...settings, preferredSpeed: rate };
+      chrome.storage.sync.set({ preferredSpeed: rate });
+    }
+  }
 
-  function changeSpeed(delta) {
+  function changeSpeed(direction) {
     const v = getVideo();
     if (!v) return;
-    const idx = SPEED_STEPS.findIndex((s) => s >= v.playbackRate - 0.01);
-    const safe = idx === -1 ? (delta > 0 ? SPEED_STEPS.length - 1 : 0) : idx;
-    const next =
-      delta > 0
-        ? Math.min(safe + 1, SPEED_STEPS.length - 1)
-        : Math.max(safe - 1, 0);
-    v.playbackRate = SPEED_STEPS[next];
-    // bar shows speed relative to max (3×)
-    const label = v.playbackRate === 1 ? "1× (normal)" : `${v.playbackRate}×`;
-    showOSD(
-      "speed",
-      delta > 0 ? "faster" : "slower",
-      label,
-      v.playbackRate / 3,
-    );
+    const rate = nextSpeed(v.playbackRate, direction, settings.speedStep);
+    setSpeed(v, rate, direction > 0 ? "faster" : "slower");
   }
 
   function resetSpeed() {
     const v = getVideo();
     if (!v) return;
-    v.playbackRate = 1;
-    showOSD("speed", "reset", "1× (normal)", 1 / 3);
+    setSpeed(v, 1, "reset");
   }
 
   function togglePause() {
@@ -744,7 +776,7 @@ import { parseCourseTitle } from "../shared/filename.js";
     const v = getVideo();
     if (!v || !v.duration) return;
     v.currentTime = (pct / 100) * v.duration;
-    showOSD("seek", "seek", `${pct}%`, pct / 100);
+    showOSD("seek", "seek", formatTime(v.currentTime), pct / 100);
   }
 
   function getPlayerContainer(v) {
@@ -832,79 +864,232 @@ import { parseCourseTitle } from "../shared/filename.js";
     }
   }
 
-  // ─── Keyboard handler ──────────────────────────────────────────────────────
+  // ─── Shortcuts ─────────────────────────────────────────────────────────────
+  // Runs one action on this frame's video. Returns false if there's none.
+  function runAction(id) {
+    if (!getVideo()) return false;
+    switch (id) {
+      case "play_pause": togglePause(); break;
+      case "skip_backward": skip(-settings.skipSeconds); break;
+      case "skip_forward": skip(settings.skipSeconds); break;
+      case "speed_down": changeSpeed(-1); break;
+      case "speed_up": changeSpeed(1); break;
+      case "speed_reset": resetSpeed(); break;
+      case "volume_down": changeVolume(-0.05); break;
+      case "volume_up": changeVolume(0.05); break;
+      case "mute": toggleMute(); break;
+      case "fullscreen": toggleFullscreen(); break;
+      case "show_shortcuts": toggleShortcutSheet(); break;
+      default: {
+        const seek = /^seek_(\d0?)$/.exec(id || "");
+        if (!seek) return false;
+        seekPercent(Number(seek[1]));
+      }
+    }
+    return true;
+  }
+
+  function toggleShortcutSheet() {
+    if (isShortcutSheetOpen()) {
+      closeShortcutSheet();
+      return;
+    }
+    openShortcutSheet({
+      parent: getOSDParent(),
+      place: (el) => positionOverPlayer(el, "center"),
+      shortcuts: settings.shortcuts,
+      skipSeconds: settings.skipSeconds,
+    });
+  }
+
+  // Typing in a text field must never trigger shortcuts. composedPath()[0] sees
+  // through shadow DOM (event.target is retargeted to the shadow host).
+  const NON_TEXT_INPUTS = new Set(["button", "checkbox", "radio", "range", "submit", "reset", "color", "file", "image"]);
+  function isTypingTarget(target) {
+    if (!target || target.nodeType !== 1) return false;
+    if (target.isContentEditable) return true;
+    if (target.tagName === "TEXTAREA" || target.tagName === "SELECT") return true;
+    if (target.tagName === "INPUT") return !NON_TEXT_INPUTS.has(target.type);
+    return Boolean(target.closest('[role="textbox"], [role="combobox"], [role="searchbox"]'));
+  }
+
   window.addEventListener(
     "keydown",
     (e) => {
-      if (!config.enabled) return;
-      const tag = e.target?.tagName;
-      if (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        e.target?.isContentEditable
-      )
-        return;
-      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (!settings.enabled) return;
+      if (isTypingTarget(e.composedPath?.()[0] || e.target)) return;
 
-      const hasVideo = !!getVideo();
-      const go = (fn) => {
+      const stop = () => {
         e.preventDefault();
         e.stopImmediatePropagation();
-        fn();
       };
 
-      // Check against keybinds
-      if (keybinds.skip_forward && e.key === keybinds.skip_forward) {
-        return go(() => skip(config.skipSeconds));
-      }
-      if (keybinds.skip_backward && e.key === keybinds.skip_backward) {
-        return go(() => skip(-config.skipSeconds));
-      }
-      if (keybinds.volume_up && e.key === keybinds.volume_up) {
-        if (hasVideo) return go(() => changeVolume(0.05));
-      }
-      if (keybinds.volume_down && e.key === keybinds.volume_down) {
-        if (hasVideo) return go(() => changeVolume(-0.05));
-      }
-      if (
-        (keybinds.speed_up && e.key === keybinds.speed_up) ||
-        (keybinds.speed_up_alt && e.key === keybinds.speed_up_alt)
-      ) {
-        if (hasVideo) return go(() => changeSpeed(1));
-      }
-      if (
-        (keybinds.speed_down && e.key === keybinds.speed_down) ||
-        (keybinds.speed_down_alt && e.key === keybinds.speed_down_alt)
-      ) {
-        if (hasVideo) return go(() => changeSpeed(-1));
-      }
-      if (keybinds.pause_play && e.key === keybinds.pause_play) {
-        if (hasVideo) return go(togglePause);
-      }
-      // Support 'k' as alternate for pause/play (not overridable)
-      if (e.key === "k") {
-        if (hasVideo) return go(togglePause);
-      }
-      if (keybinds.mute && e.key === keybinds.mute) {
-        if (hasVideo) return go(toggleMute);
-      }
-      if (keybinds.reset_speed && e.key === keybinds.reset_speed) {
-        if (hasVideo) return go(resetSpeed);
-      }
-      if (keybinds.fullscreen && e.key === keybinds.fullscreen) {
-        if (hasVideo) return go(toggleFullscreen);
-      }
-      // Handle seek keybinds
-      if (e.key >= "0" && e.key <= "9" && hasVideo) {
-        const seekKey = `seek_${parseInt(e.key) * 10}`;
-        if (keybinds[seekKey] && e.key === keybinds[seekKey]) {
-          return go(() => seekPercent(parseInt(e.key) * 10));
+      if (e.key === "Escape") {
+        if (isShortcutSheetOpen()) {
+          stop();
+          closeShortcutSheet();
+        } else {
+          // The sheet may be open in the player frame; Esc stays the page's too.
+          connectedPlayer()?.postMessage({ [RELAY]: "escape" }, "*");
         }
+        return;
+      }
+
+      const id = findAction(shortcutMap, e);
+      if (!id) return;
+
+      if (getVideo()) {
+        stop();
+        // Holding a key repeats skips/volume/speed, but not toggles.
+        if (!(e.repeat && NO_REPEAT.has(id))) runAction(id);
+        return;
+      }
+
+      // Focus is on the page around the player (the player is an iframe):
+      // hand the shortcut to the player frame.
+      const player = connectedPlayer();
+      if (player) {
+        stop();
+        if (!(e.repeat && NO_REPEAT.has(id))) player.postMessage({ [RELAY]: "run", action: id }, "*");
       }
     },
     { capture: true, passive: false },
   );
+
+  // ─── Player ↔ page relay ───────────────────────────────────────────────────
+  // The frame with the video announces itself to all its ancestor frames;
+  // they remember it and forward shortcuts pressed while they have focus.
+  const RELAY = "__swiftskip";
+  let playerWindow = null;
+
+  function connectedPlayer() {
+    try {
+      return playerWindow && !playerWindow.closed ? playerWindow : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isAncestor(win) {
+    for (let w = window; w !== window.top; ) {
+      w = w.parent;
+      if (w === win) return true;
+    }
+    return false;
+  }
+
+  function announcePlayer() {
+    for (let w = window; w !== window.top; ) {
+      w = w.parent;
+      w.postMessage({ [RELAY]: "player" }, "*");
+    }
+  }
+
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || typeof data !== "object" || !data[RELAY]) return;
+    if (data[RELAY] === "player" && event.source !== window) {
+      playerWindow = event.source;
+    } else if (data[RELAY] === "hello" && isAncestor(event.source)) {
+      if (getVideo()) announcePlayer();
+    } else if (data[RELAY] === "run" && isAncestor(event.source)) {
+      if (settings.enabled) runAction(data.action);
+    } else if (data[RELAY] === "escape" && isAncestor(event.source)) {
+      closeShortcutSheet();
+    }
+  });
+
+  // The top page asks all frames once; a player that loads later announces
+  // itself when its video shows up (see trackVideos).
+  if (window === window.top) {
+    const greet = (win) => {
+      for (let i = 0; i < win.frames.length; i++) {
+        try {
+          win.frames[i].postMessage({ [RELAY]: "hello" }, "*");
+          greet(win.frames[i]);
+        } catch {
+          /* frame went away */
+        }
+      }
+    };
+    greet(window);
+  }
+
+  // ─── Per-video: resume position + remembered speed ─────────────────────────
+  const trackedVideos = new WeakSet();
+
+  function trackVideos() {
+    for (const video of findVideos()) {
+      if (trackedVideos.has(video)) continue;
+      trackedVideos.add(video);
+      attachVideo(video);
+      if (window !== window.top) announcePlayer();
+    }
+  }
+
+  function attachVideo(v) {
+    let started = false; // first "playing" handled
+    let key = null; // resume key, fixed once the video has started
+    let lastSave = 0;
+
+    const save = () => {
+      if (!started || !key || !settings.enabled || !settings.resumePlayback) return;
+      if (isResumable(v.currentTime, v.duration)) {
+        setResumePosition(key, v.currentTime, v.duration).catch(() => {});
+      } else if (v.currentTime > 0) {
+        // Back at the very start, or (nearly) finished: nothing to resume.
+        clearResumePosition(key).catch(() => {});
+      }
+    };
+
+    v.addEventListener("playing", async () => {
+      if (started || !settings.enabled) return;
+      started = true;
+      key = resumeKey({ pageUrl: window.location.href, manifestUrl: detectedLectureUrl, duration: v.duration });
+
+      if (settings.rememberSpeed && settings.preferredSpeed !== 1 && Math.abs(v.playbackRate - 1) < 0.01) {
+        v.playbackRate = settings.preferredSpeed;
+        showOSD("speed", "faster", formatSpeed(settings.preferredSpeed), settings.preferredSpeed / MAX_SPEED);
+      }
+
+      if (!settings.resumePlayback) return;
+      pruneResumePositions().catch(() => {});
+      const saved = await getResumePosition(key).catch(() => null);
+      // Only if the player didn't already start somewhere else itself.
+      if (!saved || !isResumable(saved.time, v.duration) || v.currentTime > 5) return;
+      v.currentTime = saved.time;
+      showToast({
+        parent: getOSDParent(),
+        place: (el) => positionOverPlayer(el, "bottom"),
+        message: `Resumed at ${formatTime(saved.time)}`,
+        action: {
+          label: "Start over",
+          onClick: () => {
+            v.currentTime = 0;
+            clearResumePosition(key).catch(() => {});
+          },
+        },
+      });
+    });
+
+    v.addEventListener("timeupdate", () => {
+      if (Date.now() - lastSave < 5000) return;
+      lastSave = Date.now();
+      save();
+    });
+    v.addEventListener("pause", save);
+    v.addEventListener("seeked", save);
+    v.addEventListener("ended", () => key && clearResumePosition(key).catch(() => {}));
+    window.addEventListener("pagehide", save);
+    document.addEventListener("visibilitychange", () => document.hidden && save());
+  }
+
+  trackVideos();
+  const videoTimer = setInterval(() => {
+    // After an extension update this old copy is cut off; stop quietly.
+    if (!chrome.runtime?.id) return clearInterval(videoTimer);
+    trackVideos();
+  }, 2000);
 
   startHlsDetection();
 
@@ -947,43 +1132,27 @@ import { parseCourseTitle } from "../shared/filename.js";
     }, 2000);
   }
 
-  // ─── Messages from popup ───────────────────────────────────────────────────
+  // ─── Messages from the popup / background ─────────────────────────────────
+  // Only the frame that has the video answers, so the popup gets its reply.
+  function playbackState(v) {
+    return { hasVideo: true, rate: v.playbackRate, paused: v.paused };
+  }
+
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (
-      !config.enabled &&
-      msg.action !== "toggle" &&
-      msg.action !== "updateKeybinds" &&
-      msg.action !== "lectureDownloadProgress"
-    )
-      return;
-    switch (msg.action) {
-      case "lectureDownloadProgress":
-        setDownloadProgress(msg);
-        break;
-      case "skip":
-        skip(msg.seconds);
-        break;
-      case "volume":
-        changeVolume(msg.delta);
-        break;
-      case "speed":
-        changeSpeed(msg.delta);
-        break;
-      case "resetSpeed":
-        resetSpeed();
-        break;
-      case "pause":
-        togglePause();
-        break;
-      case "mute":
-        toggleMute();
-        break;
-      case "toggle":
-        config.enabled = msg.enabled;
-        break;
-      case "updateKeybinds":
-        keybinds = msg.keybinds;
-        break;
+    if (!msg || !msg.action) return false;
+    if (msg.action === "lectureDownloadProgress") {
+      setDownloadProgress(msg);
+      return false;
     }
+
+    const v = getVideo();
+    if (!v) return false;
+    if (msg.action === "runShortcut") {
+      if (settings.enabled) runAction(msg.shortcut);
+      sendResponse(playbackState(v));
+    } else if (msg.action === "getPlayback") {
+      sendResponse(playbackState(v));
+    }
+    return false;
   });
 })();

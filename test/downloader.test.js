@@ -90,6 +90,7 @@ function collect() {
     saveFile: async (url, title, extension) => {
       const blob = url.startsWith("blob:") ? resolveObjectURL(url) : null;
       saved.push({ url, title, extension, blob });
+      return 42; // the browser's download id
     },
   };
 }
@@ -99,7 +100,7 @@ test("keeps segments in playlist order even when they arrive out of order", asyn
   const result = await runHlsDownload({ url: `${base}/master.m3u8`, title: "HC1", tabId: 7, jobId: "order", ...FAST, ...c });
 
   // Fake segments aren't real video, so conversion fails and it falls back to .ts.
-  assert.deepEqual(result, { ok: true, type: "ts" });
+  assert.deepEqual(result, { ok: true, type: "ts", downloadId: 42 });
   assert.equal(c.saved.length, 1);
   assert.equal(await c.saved[0].blob.text(), SEGMENTS.join(""));
 
@@ -176,7 +177,7 @@ test("real MPEG-TS is converted to a playable MP4", { skip: !hasFfmpeg() && "ffm
 
   const c = collect();
   const result = await runHlsDownload({ url: `${base}/real/list.m3u8`, title: "HC", tabId: 7, jobId: "mp4", ...FAST, ...c });
-  assert.deepEqual(result, { ok: true, type: "mp4" });
+  assert.deepEqual(result, { ok: true, type: "mp4", downloadId: 42 });
   assert.ok(c.progress.some((p) => p.phase === "Converting to MP4"));
 
   const out = join(realTsDir, "out.mp4");

@@ -102,35 +102,32 @@ Gereed! - SwiftSkip is nu actief in Firefox
 
 ## Sneltoetsen
 
-| Actie | Toets | Configureerbaar |
-|-------|-------|-----------------|
-| Overslaan vooruit | `→` | Ja |
-| Overslaan achteruit | `←` | Ja |
-| Afspelen/Pauzeren | `Space` / `K` | Ja |
-| Geluid verhogen | `↑` | Ja |
-| Geluid verlagen | `↓` | Ja |
-| Snelheid verhogen | `]` of `$` | Ja |
-| Snelheid verlagen | `[` of `^` | Ja |
-| Snelheid resetten | `R` | Ja |
-| Dempen/Ontdempen | `M` | Ja |
-| Volledig scherm | `F` | Ja |
-| Naar 0%-90% zoeken | `0`-`9` | Ja |
+De sneltoetsen werken zodra een lesopname open staat — u hoeft niet eerst in de speler te klikken. Druk `?` op een lesopname om ze allemaal te zien.
+
+| Actie | Toetsen |
+|-------|---------|
+| Afspelen / pauzeren | `Space` of `K` |
+| Terug / vooruit springen | `←` / `→` (5, 10, 15 of 30 s) |
+| Trager / sneller | `[` / `]` of `<` / `>` (op AZERTY ook `^` / `$`) |
+| Normale snelheid | `R` |
+| Volume omlaag / omhoog | `↓` / `↑` |
+| Dempen | `M` |
+| Volledig scherm | `F` |
+| Naar 0% – 90% springen | `0` – `9` (op AZERTY ook zonder Shift) |
+| Alle sneltoetsen tonen | `?` |
+
+Elke sneltoets kan aangepast worden, en elke actie kan twee toetsen hebben (eventueel met Shift, Ctrl of Alt).
 
 ---
 
-## Configuratie
+## Instellingen
 
-### Keybindings aanpassen
+Klik op het SwiftSkip-icoon voor de snelle bediening (downloaden, snelheid, spronginterval). **Settings** opent de volledige instellingenpagina:
 
-1. Klik op het **extensie-icoon** in uw browser
-2. Klik op het **tandwiel** (⚙️) naast "Keybinds"
-3. Klik op een toets die u wilt wijzigen
-4. Druk op de gewenste nieuwe toets
-5. Klik **"Done"** wanneer klaar
-
-### Standaardwaarden herstellen
-
-Alle keybindings kunnen naar standaardwaarden worden ingesteld door de extensie opnieuw in te stellen.
+- **Spronginterval** en **snelheidsstappen** (0,25× of 0,1×, van 0,25× tot 4×)
+- **Afspeelsnelheid onthouden** — nieuwe lessen starten aan de snelheid die u laatst koos
+- **Verdergaan waar u gebleven was** — een les opnieuw openen springt terug naar waar u stopte
+- **Sneltoetsen** — klik op een toets om ze te wijzigen; **Reset to defaults** zet ze terug
 
 ---
 

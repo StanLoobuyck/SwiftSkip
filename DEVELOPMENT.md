@@ -28,7 +28,9 @@ runs on `localhost` so the test page works.
 
 `test/fixtures/index.html` (served at http://localhost:8123) is a stand-in for
 a Toledo lecture: a 2-minute video with a clock on it for the keybinds, and an
-HLS playlist request so the **Download Lecture** button appears. The media is
+HLS playlist request so the **Download Lecture** button appears.
+`iframe.html` (linked from it) puts the player in an iframe like Toledo does,
+for testing shortcuts pressed outside the player. The media is
 generated with ffmpeg on first run (`npm run fixtures` to redo it).
 
 ### Debugging

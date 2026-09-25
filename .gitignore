@@ -16,3 +16,6 @@ web-ext-artifacts/
 dist/
 test/fixtures/media/
 .profiles/
+
+# Editor lock files (LibreOffice etc.)
+.~lock.*

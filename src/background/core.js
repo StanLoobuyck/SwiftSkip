@@ -5,8 +5,9 @@
 // `runDownload` and `cancelDownload`.
 
 import { buildLectureTitle, sanitizeFilename } from "../shared/filename.js";
+import { ext } from "../shared/ext.js";
 
-export const ext = globalThis.browser ?? globalThis.chrome;
+export { ext };
 
 // ─── Download state (one per tab) ─────────────────────────────────────────────
 
@@ -28,6 +29,7 @@ function createState(tabId) {
     speed: 0,
     eta: null,
     type: null,
+    downloadId: null,
     error: null,
   };
 }
@@ -162,6 +164,7 @@ async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
     phase: "Complete",
     percent: 100,
     type: response.type,
+    downloadId: response.downloadId ?? null,
     error: null,
   });
 }
@@ -170,8 +173,9 @@ async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
 
 // extraHandlers: { [action]: (msg, sender) => response | Promise<response> }
 export function startBackground({ runDownload, cancelDownload, extraHandlers = {} }) {
-  // Messages from content scripts carry their tab; the popup passes `tabId`.
-  const tabOf = (msg, sender) => (sender.tab && sender.tab.id) || msg.tabId;
+  // The popup (and the offscreen document) pass `tabId`; content scripts
+  // don't, and are identified by the tab they run in.
+  const tabOf = (msg, sender) => msg.tabId ?? (sender.tab && sender.tab.id);
 
   const handlers = {
     registerLectureDownloadUrl(msg, sender) {
@@ -193,6 +197,14 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
     registerLectureContext(msg, sender) {
       const tabId = tabOf(msg, sender);
       getState(tabId).context = { course: msg.course || null, lecture: msg.lecture || null };
+      return { ok: true };
+    },
+
+    // "Show in folder" for the tab's finished download.
+    async showDownload(msg, sender) {
+      const { downloadId } = getState(tabOf(msg, sender));
+      if (downloadId == null) return { ok: false };
+      await ext.downloads.show(downloadId);
       return { ok: true };
     },
 

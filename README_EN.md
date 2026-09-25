@@ -102,35 +102,32 @@ Done! - SwiftSkip is now active in Firefox
 
 ## Keyboard Shortcuts
 
-| Action | Key | Customizable |
-|--------|-----|--------------|
-| Skip forward | `→` | Yes |
-| Skip backward | `←` | Yes |
-| Play/Pause | `Space` / `K` | Yes |
-| Volume up | `↑` | Yes |
-| Volume down | `↓` | Yes |
-| Speed up | `]` or `$` | Yes |
-| Speed down | `[` or `^` | Yes |
-| Reset speed | `R` | Yes |
-| Mute/Unmute | `M` | Yes |
-| Fullscreen | `F` | Yes |
-| Seek to 0%-90% | `0`-`9` | Yes |
+Shortcuts work as soon as a lecture is open — you don't have to click inside the player first. Press `?` on a lecture to see them all.
+
+| Action | Keys |
+|--------|------|
+| Play / pause | `Space` or `K` |
+| Skip back / forward | `←` / `→` (5, 10, 15 or 30 s) |
+| Slower / faster | `[` / `]` or `<` / `>` (on AZERTY also `^` / `$`) |
+| Normal speed | `R` |
+| Volume down / up | `↓` / `↑` |
+| Mute | `M` |
+| Fullscreen | `F` |
+| Jump to 0% – 90% | `0` – `9` (on AZERTY without Shift too) |
+| Show all shortcuts | `?` |
+
+Every shortcut can be changed, and each action can have two keys (with Shift, Ctrl or Alt if you like).
 
 ---
 
-## Configuration
+## Settings
 
-### Customize Keybindings
+Click the SwiftSkip icon for the quick controls (download, speed, skip interval). **Settings** opens the full settings page:
 
-1. Click the **extension icon** in your browser
-2. Click the **gear icon** (⚙️) next to "Keybinds"
-3. Click on a keybinding you want to change
-4. Press your desired new key
-5. Click **"Done"** when finished
-
-### Reset to Defaults
-
-All keybindings can be reset to their default values by re-installing the extension or clearing your browser's storage.
+- **Skip interval** and **speed steps** (0.25× or 0.1×, from 0.25× to 4×)
+- **Remember playback speed** — new lectures start at the speed you last chose
+- **Continue where you left off** — reopening a lecture jumps back to where you stopped
+- **Keyboard shortcuts** — click a key to change it; **Reset to defaults** restores them
 
 ---
 

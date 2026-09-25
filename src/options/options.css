@@ -1,0 +1,219 @@
+body {
+  background: var(--surface);
+  font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #141417;
+  }
+}
+
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+h3 {
+  margin: 20px 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.subtle {
+  margin: 0;
+  color: var(--muted);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.card {
+  margin-bottom: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-intro {
+  margin-top: 2px;
+  line-height: 1.6;
+}
+
+.card-intro kbd {
+  vertical-align: 1px;
+}
+
+.btn-small {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ─── Settings rows ─────────────────────────────────────────────────────── */
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+h2 + .setting {
+  margin-top: 10px;
+}
+
+.setting-label {
+  font-weight: 500;
+}
+
+.setting-desc {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.setting-desc .link {
+  margin-left: 4px;
+  font-size: 13px;
+}
+
+/* ─── Shortcuts ─────────────────────────────────────────────────────────── */
+
+.notice {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  font-size: 13px;
+}
+
+.shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 42px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shortcut:last-child {
+  border-bottom: 0;
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.binding {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.binding:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.binding .plus {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.binding.is-recording {
+  min-width: 108px;
+  justify-content: center;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.binding-empty {
+  color: var(--faint);
+  font-size: 13px;
+}
+
+.add-binding {
+  width: 26px;
+  height: 26px;
+}
+
+details.jump {
+  margin-top: 4px;
+}
+
+details.jump summary {
+  padding: 10px 0;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+details.jump summary:hover {
+  color: var(--text);
+}
+
+/* ─── About ─────────────────────────────────────────────────────────────── */
+
+.about .subtle {
+  line-height: 1.6;
+}
+
+.links {
+  display: flex;
+  gap: 18px;
+  margin: 12px 0 0;
+}

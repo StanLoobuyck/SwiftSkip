@@ -290,3 +290,188 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* ─── Shortcut sheet ("?") ───────────────────────────────────────────────── */
+
+.swiftskip-sheet {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2147483647 !important;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 18px 20px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(24, 24, 27, 0.86);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  color: #f2f2f4;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Inter, Roboto, sans-serif;
+  text-align: left;
+  animation: swiftskip-sheet-in 0.18s ease-out;
+}
+
+.swiftskip-sheet * {
+  box-sizing: border-box;
+}
+
+.swiftskip-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.swiftskip-sheet-title {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.swiftskip-sheet-close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font: 400 20px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Inter, Roboto, sans-serif;
+  cursor: pointer;
+}
+
+.swiftskip-sheet-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.swiftskip-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  column-gap: 28px;
+}
+
+.swiftskip-sheet-group h3 {
+  margin: 12px 0 4px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.swiftskip-sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.swiftskip-sheet-label {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.swiftskip-sheet-bindings,
+.swiftskip-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.swiftskip-sheet-bindings {
+  gap: 8px;
+}
+
+.swiftskip-sheet kbd,
+.swiftskip-toast kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: 600 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Inter, Roboto, sans-serif;
+}
+
+.swiftskip-plus {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+}
+
+.swiftskip-sheet-footer {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+}
+
+@keyframes swiftskip-sheet-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ─── Toast ("Resumed at …") ─────────────────────────────────────────────── */
+
+.swiftskip-toast {
+  position: fixed;
+  top: calc(100% - 72px);
+  left: 50%;
+  transform: translate(-50%, -100%);
+  z-index: 2147483647 !important;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(24, 24, 27, 0.82);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  color: #fff;
+  font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Inter, Roboto, sans-serif;
+  white-space: nowrap;
+  animation: swiftskip-toast-in 0.2s ease-out;
+}
+
+.swiftskip-toast-action {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.swiftskip-toast-action:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+@keyframes swiftskip-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -90%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}

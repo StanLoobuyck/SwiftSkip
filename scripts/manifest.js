@@ -30,6 +30,7 @@ export function buildManifest(target, { version, dev }) {
     description: "Full keyboard controls for Toledo/Ultra recordings, plus Kaltura lecture downloads.",
     icons: ICONS,
     content_scripts: CONTENT_SCRIPTS,
+    options_ui: { page: "options.html", open_in_tab: true },
   };
 
   switch (target) {

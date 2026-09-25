@@ -47,6 +47,7 @@ async function buildTarget(target) {
     background: `background/${target}.js`,
     content: "content/content.js",
     popup: "popup/popup.js",
+    options: "options/options.js",
   };
   if (target === "chrome") entries.offscreen = "offscreen/offscreen.js";
 
@@ -69,8 +70,11 @@ async function buildTarget(target) {
   });
 
   const statics = [
+    ["ui/ui.css", "ui.css"],
     ["popup/popup.html", "popup.html"],
     ["popup/popup.css", "popup.css"],
+    ["options/options.html", "options.html"],
+    ["options/options.css", "options.css"],
     ["content/style.css", "style.css"],
     ["icons", "icons"],
   ];

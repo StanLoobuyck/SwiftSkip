@@ -1,31 +1,37 @@
-// Settings shared by the content script and the popup.
+// User settings: defaults and validation — pure (unit-tested in test/).
+// Reading/writing browser storage lives in storage.js.
 
-export const DEFAULT_SKIP = 10;
+import { migrateLegacyKeybinds, normalizeShortcuts } from "./shortcuts.js";
 
-export const DEFAULT_KEYBINDS = {
-  skip_forward: "ArrowRight",
-  skip_backward: "ArrowLeft",
-  volume_up: "ArrowUp",
-  volume_down: "ArrowDown",
-  speed_up: "]",
-  speed_down: "[",
-  speed_up_alt: "$",
-  speed_down_alt: "^",
-  pause_play: " ",
-  mute: "m",
-  reset_speed: "r",
-  fullscreen: "f",
-  seek_0: "0",
-  seek_10: "1",
-  seek_20: "2",
-  seek_30: "3",
-  seek_40: "4",
-  seek_50: "5",
-  seek_60: "6",
-  seek_70: "7",
-  seek_80: "8",
-  seek_90: "9",
+export const SKIP_OPTIONS = [5, 10, 15, 30];
+export const SPEED_STEP_OPTIONS = [0.25, 0.1];
+
+export const DEFAULT_SETTINGS = {
+  enabled: true,
+  skipSeconds: 10,
+  speedStep: 0.25,
+  rememberSpeed: true,
+  preferredSpeed: 1,
+  resumePlayback: true,
+  shortcuts: normalizeShortcuts(null),
 };
 
-// Safari has no downloads API, so the download UI is hidden there.
-export const SUPPORTS_DOWNLOAD = __BROWSER__ !== "safari";
+const oneOf = (value, options, fallback) => (options.includes(value) ? value : fallback);
+const bool = (value, fallback) => (typeof value === "boolean" ? value : fallback);
+
+// Whatever is in storage (possibly from an older version) → complete settings.
+export function normalizeSettings(stored = {}) {
+  const d = DEFAULT_SETTINGS;
+  const speed = Number(stored.preferredSpeed);
+  return {
+    enabled: bool(stored.enabled, d.enabled),
+    skipSeconds: oneOf(stored.skipSeconds, SKIP_OPTIONS, d.skipSeconds),
+    speedStep: oneOf(stored.speedStep, SPEED_STEP_OPTIONS, d.speedStep),
+    rememberSpeed: bool(stored.rememberSpeed, d.rememberSpeed),
+    preferredSpeed: speed >= 0.25 && speed <= 4 ? speed : d.preferredSpeed,
+    resumePlayback: bool(stored.resumePlayback, d.resumePlayback),
+    shortcuts: stored.shortcuts
+      ? normalizeShortcuts(stored.shortcuts)
+      : migrateLegacyKeybinds(stored.keybinds), // ≤ 3.2 stored "keybinds"
+  };
+}

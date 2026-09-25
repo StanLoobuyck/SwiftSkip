@@ -2,230 +2,86 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SwiftSkip</title>
+    <link rel="stylesheet" href="ui.css" />
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <div class="popup">
-      <!-- Header -->
-      <header>
-        <div class="logo">
-          <img src="icons/icon48.png" alt="SwiftSkip Logo" class="logo-icon" />
-          <span class="logo-title">SwiftSkip</span>
+    <main class="popup" id="popup">
+      <header class="bar">
+        <div class="brand">
+          <img src="icons/icon48.png" alt="" width="18" height="18" />
+          <span>SwiftSkip</span>
         </div>
-        <label class="toggle-pill" title="Enable / disable">
-          <input type="checkbox" id="toggle-enabled" />
-          <span class="pill-track"><span class="pill-thumb"></span></span>
+        <label class="switch" title="Turn SwiftSkip on or off">
+          <input type="checkbox" id="enabled" role="switch" aria-label="SwiftSkip on" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
         </label>
-      </header>      <div id="status-message" class="status-message" aria-live="polite"></div>
+      </header>
 
-      <!-- Lecture download -->
-      <div class="v-stack" id="download-section">
-        <div class="section-label">Lecture Download</div>
-        <div class="frosted-panel download-panel">
-          <div class="download-row">
-            <button id="popup-download-btn" class="download-primary" type="button">
-              Download Lecture
+      <div class="body" id="body">
+        <section class="lecture" aria-live="polite">
+          <p class="lecture-course" id="lecture-course" hidden></p>
+          <p class="lecture-title" id="lecture-title">No lecture on this page</p>
+          <p class="lecture-hint" id="lecture-hint">Open a recording in Toledo to download it or control it with the keyboard.</p>
+
+          <div class="download" id="download">
+            <button class="btn btn-primary download-btn" id="download-btn" type="button" hidden>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>
+              <span id="download-label">Download lecture</span>
             </button>
-            <button
-              id="popup-download-cancel"
-              class="download-cancel"
-              type="button"
-              title="Cancel download"
-              aria-label="Cancel download"
-              hidden
-            >
-              &times;
-            </button>
-          </div>
-          <div id="popup-download-progress" class="popup-download-progress" hidden>
-            <div class="popup-download-progress-top">
-              <span id="popup-download-label">Ready</span>
-              <span id="popup-download-meta">0%</span>
+
+            <div class="progress" id="progress" hidden>
+              <div class="progress-head">
+                <span class="progress-phase" id="progress-phase">Preparing</span>
+                <button class="icon-btn" id="cancel-btn" type="button" title="Cancel download" aria-label="Cancel download">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+                </button>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+              <p class="progress-meta" id="progress-meta"></p>
             </div>
-            <div class="popup-download-track">
-              <div id="popup-download-fill"></div>
+
+            <p class="status status-done" id="done" hidden>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
+              <span>Saved to Downloads</span>
+              <button class="link" id="show-file" type="button">Show in folder</button>
+            </p>
+            <p class="status status-error" id="error" hidden></p>
+          </div>
+        </section>
+
+        <section class="controls">
+          <div class="row">
+            <span class="row-label" id="speed-label">Speed</span>
+            <div class="stepper" role="group" aria-labelledby="speed-label">
+              <button class="icon-btn" id="speed-down" type="button" title="Slower" aria-label="Slower">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+              </button>
+              <output class="stepper-value" id="speed-value">–</output>
+              <button class="icon-btn" id="speed-up" type="button" title="Faster" aria-label="Faster">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+              </button>
             </div>
           </div>
-        </div>
+          <div class="row">
+            <span class="row-label" id="skip-label">Skip</span>
+            <div class="segmented" id="skip-options" role="radiogroup" aria-labelledby="skip-label"></div>
+          </div>
+        </section>
       </div>
 
-      <!-- Skip interval -->
-      <div class="v-stack">
-        <div class="section-label">Skip Interval</div>
-        <div class="frosted-panel">
-          <div class="skip-row">
-            <button class="skip-preset" data-val="5">5s</button>
-            <button class="skip-preset" data-val="10">10s</button>
-            <button class="skip-preset" data-val="15">15s</button>
-            <button class="skip-preset" data-val="30">30s</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div class="v-stack">
-        <div class="section-label">Controls</div>
-        <div class="frosted-panel">
-          <div class="control-group-label">Playback</div>
-          <div class="controls-grid">
-            <button class="ctrl-btn" data-action="skip" data-seconds="-10">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              >
-                <polygon points="19 20 9 12 19 4" />
-                <line x1="5" y1="19" x2="5" y2="5" />
-              </svg>
-              <span>−<span class="skip-hint">10</span>s</span>
-            </button>
-            <button class="ctrl-btn accent-btn" data-action="pause">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="4" width="4" height="16" rx="1" />
-                <rect x="14" y="4" width="4" height="16" rx="1" />
-              </svg>
-              <span>Play/Pause</span>
-            </button>
-            <button class="ctrl-btn" data-action="skip" data-seconds="10">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              >
-                <polygon points="5 4 15 12 5 20" />
-                <line x1="19" y1="5" x2="19" y2="19" />
-              </svg>
-              <span>+<span class="skip-hint">10</span>s</span>
-            </button>
-          </div>
-
-          <div class="control-group-label">Volume</div>
-          <div class="controls-grid">
-            <button class="ctrl-btn" data-action="volume" data-delta="-0.1">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <line x1="23" y1="9" x2="17" y2="15" />
-                <line x1="17" y1="9" x2="23" y2="15" />
-              </svg>
-              <span>−10%</span>
-            </button>
-            <button class="ctrl-btn" data-action="mute">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              </svg>
-              <span>Mute</span>
-            </button>
-            <button class="ctrl-btn" data-action="volume" data-delta="0.1">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              </svg>
-              <span>+10%</span>
-            </button>
-          </div>
-
-          <div class="control-group-label">Speed</div>
-          <div class="controls-grid">
-            <button class="ctrl-btn" data-action="speed" data-delta="-1">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              >
-                <polygon points="11 19 2 12 11 5 11 19" />
-                <polygon points="22 19 13 12 22 5 22 19" />
-              </svg>
-              <span>Slower</span>
-            </button>
-            <button class="ctrl-btn" data-action="resetSpeed">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              >
-                <polyline points="1 4 1 10 7 10" />
-                <path d="M3.51 15a9 9 0 1 0 .49-4.95" />
-              </svg>
-              <span>1× Reset</span>
-            </button>
-            <button class="ctrl-btn" data-action="speed" data-delta="1">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              >
-                <polygon points="13 19 22 12 13 5 13 19" />
-                <polygon points="2 19 11 12 2 5 2 19" />
-              </svg>
-              <span>Faster</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Keybinds -->
-      <div class="v-stack">
-        <div class="section-label-with-toggle">
-          <span class="section-label">Keybinds</span>
-          <button class="toggle-keybinds-btn" title="Configure keybinds">⚙️</button>
-        </div>
-        <div class="frosted-panel">
-          <div id="keybinds-preview" class="keybinds-preview">
-            <div class="keybind-entry">
-              <span class="keybind-action">Skip Forward</span>
-              <span class="keybind-keys">→</span>
-            </div>
-            <div class="keybind-entry">
-              <span class="keybind-action">Skip Backward</span>
-              <span class="keybind-keys">←</span>
-            </div>
-            <div class="keybind-entry">
-              <span class="keybind-action">Play/Pause</span>
-              <span class="keybind-keys">Space</span>
-            </div>
-            <div class="keybind-entry">
-              <span class="keybind-action">Mute</span>
-              <span class="keybind-keys">M</span>
-            </div>
-          </div>
-          <div id="keybinds-editor" class="keybinds-editor" style="display: none;"></div>
-          <button id="close-keybinds-btn" class="keybinds-close-btn" style="display: none;">Done</button>
-        </div>
-      </div>
-    </div>
+      <footer class="footer">
+        <button class="footer-link" id="open-shortcuts" type="button">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10" /></svg>
+          Shortcuts
+        </button>
+        <button class="footer-link" id="open-settings" type="button">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+          Settings
+        </button>
+      </footer>
+    </main>
     <script src="popup.js"></script>
   </body>
 </html>

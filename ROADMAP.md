@@ -28,19 +28,23 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 
 ## Phase 2 — Playback controls
 
-- [ ] Keybind changes apply to all open tabs immediately
-- [ ] Keybinds with modifiers (Shift/Ctrl/Alt); `K` becomes a normal, rebindable keybind
-- [ ] "Reset to defaults" button and conflict warning in the keybind editor
-- [ ] 🔍 Dual-stream lectures: apply speed/seek to every video so they stay in sync
-- [ ] Resume where you left off, per lecture
-- [ ] Remember preferred playback speed
-- [ ] Finer speed steps (0.1×, up to 4×)
-- [ ] `?` shows a shortcut overlay on the video
+- [x] Keybind changes apply to all open tabs immediately
+- [x] Keybinds with modifiers (Shift/Ctrl/Alt), up to two per action; `K` is a normal, rebindable keybind
+- [x] "Reset to defaults" button and conflict handling in the keybind editor
+- [x] ~~🔍 Dual-stream sync~~ — not needed: camera + slides are one video
+- [x] Resume where you left off, per lecture ("Resumed at 1:05 · Start over")
+- [x] Remember preferred playback speed
+- [x] Speed steps of 0.25× (or 0.1×), from 0.25× up to 4×
+- [x] `?` shows a shortcut overlay on the video
+- [x] Shortcuts work with focus outside the player (forwarded to the player iframe)
+- [x] AZERTY: `^`/`$` and the unshifted number row work like `[`/`]` and `0`–`9`
+- [x] New minimal popup (lecture + download, speed, skip) and a full settings page
+- [x] Light/dark follows the system
 
 ## Phase 3 — Security, privacy, permissions
 
 - [ ] 🔍 Replace `<all_urls>` with KU Leuven + Kaltura domains only
-- [ ] Remove `innerHTML` usage (3 lint warnings)
+- [x] Remove `innerHTML` usage (3 lint warnings)
 - [ ] Privacy policy (no data is collected or sent)
 - [x] New Firefox add-on ID that doesn't suggest an official KU Leuven product (`swiftskip@stanloobuyck.github.io`; fixed once signed)
 - [x] "Not affiliated with KU Leuven" disclaimer in the READMEs
@@ -50,11 +54,12 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 ## Phase 4 — UX & languages
 
 - [ ] Dutch + English (`_locales/`, follows browser language)
-- [ ] Options page for settings/keybinds (instead of the cramped popup)
+- [x] Options page for settings/keybinds (instead of the cramped popup)
 - [ ] Welcome page on first install
-- [ ] Popup shows what was detected for the current tab
+- [x] Popup shows what was detected for the current tab
 - [ ] After an update, open Toledo tabs need a refresh in Chrome — inject into open tabs on update (needs `scripting` permission)
-- [ ] Light/dark follows the system; keyboard + screen-reader accessible popup
+- [x] Light/dark follows the system
+- [ ] Full keyboard + screen-reader pass over popup and settings page
 
 ## Phase 5 — Testing & code quality
 

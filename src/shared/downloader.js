@@ -130,8 +130,8 @@ export async function remuxToMp4(tsBlobs, signal, report = () => {}) {
 }
 
 // onProgress(progress) receives { jobId, tabId, phase, percent, downloaded?, total?, speed?, eta? }.
-// saveFile(url, title, extension) must start a browser download and resolve once it has.
-// Resolves to { ok: true, type } | { ok: false, canceled: true } | { ok: false, error }.
+// saveFile(url, title, extension) must start a browser download and resolve (to its id) once it has.
+// Resolves to { ok: true, type, downloadId } | { ok: false, canceled: true } | { ok: false, error }.
 export async function runHlsDownload({ url, title, tabId, jobId, onProgress, saveFile, ...options }) {
   const opts = { ...DEFAULTS, ...options };
   const job = { id: jobId, abortController: new AbortController() };
@@ -159,15 +159,16 @@ export async function runHlsDownload({ url, title, tabId, jobId, onProgress, sav
     }
 
     const objectUrl = URL.createObjectURL(file);
+    let downloadId;
     try {
       report({ phase: "Saving", percent: 100 });
-      await saveFile(objectUrl, title, type);
+      downloadId = await saveFile(objectUrl, title, type);
     } finally {
       setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
     }
 
     report({ phase: "Complete", percent: 100 });
-    return { ok: true, type };
+    return { ok: true, type, downloadId };
   } catch (error) {
     if (signal.aborted || (error && error.name === "AbortError")) {
       report({ phase: "Canceled", percent: 0 });

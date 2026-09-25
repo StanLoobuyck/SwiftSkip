@@ -19,6 +19,7 @@ async function saveFile(url, title, extension) {
   if (!response || !response.ok) {
     throw new Error(response && response.error ? response.error : "Chrome did not start the download.");
   }
+  return response.downloadId;
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
