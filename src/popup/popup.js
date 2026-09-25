@@ -1,30 +1,4 @@
-const DEFAULT_SKIP = 10;
-
-// ── Default keybinds ────────────────────────────────────────────────────────
-const DEFAULT_KEYBINDS = {
-  skip_forward: "ArrowRight",
-  skip_backward: "ArrowLeft",
-  volume_up: "ArrowUp",
-  volume_down: "ArrowDown",
-  speed_up: "]",
-  speed_down: "[",
-  speed_up_alt: "$",
-  speed_down_alt: "^",
-  pause_play: " ",
-  mute: "m",
-  reset_speed: "r",
-  fullscreen: "f",
-  seek_0: "0",
-  seek_10: "1",
-  seek_20: "2",
-  seek_30: "3",
-  seek_40: "4",
-  seek_50: "5",
-  seek_60: "6",
-  seek_70: "7",
-  seek_80: "8",
-  seek_90: "9",
-};
+import { DEFAULT_KEYBINDS, DEFAULT_SKIP, SUPPORTS_DOWNLOAD } from "../shared/settings.js";
 
 const KEYBIND_LABELS = {
   skip_forward: "Skip Forward",
@@ -429,7 +403,11 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
-requestDownloadState();
+if (SUPPORTS_DOWNLOAD) {
+  requestDownloadState();
+} else {
+  document.getElementById("download-section").hidden = true;
+}
 
 // ── Control buttons ───────────────────────────────────────────────────────────
 document.querySelectorAll("[data-action]").forEach((btn) => {

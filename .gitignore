@@ -11,3 +11,8 @@ coverage/
 web-ext-artifacts/
 *.xpi
 *.zip
+
+# Generated
+dist/
+test/fixtures/media/
+.profiles/

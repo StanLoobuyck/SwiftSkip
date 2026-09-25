@@ -245,7 +245,8 @@ header {
 }
 
 .popup-download-progress[hidden],
-.download-cancel[hidden] {
+.download-cancel[hidden],
+#download-section[hidden] {
   display: none;
 }
 
