@@ -52,6 +52,8 @@ const result = await webExt.cmd.sign({
   artifactsDir,
   apiKey,
   apiSecret,
+  // The CLI fills this in by default; the programmatic API doesn't.
+  amoBaseUrl: "https://addons.mozilla.org/api/v5/",
   channel: "unlisted",
   uploadSourceCode: sourceZip,
 });
