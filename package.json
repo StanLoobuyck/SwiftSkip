@@ -1,6 +1,6 @@
 {
   "name": "swiftskip",
-  "version": "3.2.0",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,9 +11,10 @@
     "dev:firefox": "node scripts/dev.js firefox",
     "dev:chrome": "node scripts/dev.js chrome",
     "test": "node --test \"test/*.test.js\"",
-    "lint": "node scripts/build.js firefox && web-ext lint --source-dir dist/firefox",
+    "lint": "node scripts/build.js firefox && web-ext lint --self-hosted --source-dir dist/firefox",
     "fixtures": "node scripts/fixtures.js",
-    "sign": "node scripts/sign.js"
+    "sign": "node scripts/sign.js",
+    "release": "node scripts/release.js"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

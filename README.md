@@ -16,8 +16,10 @@ Downloaded recordings are for your personal study only — please don't share th
 
 ## Install
 
-Download the zip for your browser from the [latest release](https://github.com/StanLoobuyck/SwiftSkip/releases/latest), then follow the installation guide:
-[English](README_EN.md) · [Nederlands](README_NL.md)
+- **Zen / Firefox / LibreWolf:** [swiftskip-firefox.xpi](https://github.com/StanLoobuyck/SwiftSkip/releases/latest/download/swiftskip-firefox.xpi) — updates itself
+- **Chrome / Edge / Brave / …:** [swiftskip-chrome.zip](https://github.com/StanLoobuyck/SwiftSkip/releases/latest/download/swiftskip-chrome.zip) — "Load unpacked"
+
+Step-by-step guide: [Nederlands](README_NL.md#installeren) · [English](README_EN.md#installing). What's new: [CHANGELOG.md](CHANGELOG.md).
 
 ## Development
 

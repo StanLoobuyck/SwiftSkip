@@ -15,6 +15,9 @@ const ACTION = {
   default_icon: ICONS,
 };
 
+// Firefox/Zen check this for new versions (updated by `npm run release`).
+export const UPDATE_URL = "https://raw.githubusercontent.com/StanLoobuyck/SwiftSkip/main/updates.json";
+
 // Dev builds also run on the local test pages (npm run dev:*).
 const DEV_HOSTS = ["http://localhost/*", "http://127.0.0.1/*"];
 
@@ -56,6 +59,8 @@ export function buildManifest(target, { version, dev }) {
             strict_min_version: "109.0",
             // SwiftSkip sends no data anywhere (required by addons.mozilla.org).
             data_collection_permissions: { required: ["none"] },
+            // Self-hosted updates (the add-on is signed "unlisted", not on AMO).
+            ...(dev ? {} : { update_url: UPDATE_URL }),
           },
         },
         permissions: [...permissions, "downloads", ...hosts],

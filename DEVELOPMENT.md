@@ -98,7 +98,12 @@ loaded from it.
 
 ## Releasing
 
-1. Bump `"version"` in `package.json` (it goes into every manifest).
-2. `npm test && npm run lint && npm run build`
-3. Upload the zips from `web-ext-artifacts/`:
-   Firefox → addons.mozilla.org, Chrome/Edge → their web stores.
+1. Add a `## <version>` section to `CHANGELOG.md` (what friends will notice) and commit it.
+2. `npm run release <version> --dry-run` — checks everything and builds, publishes nothing.
+3. `npm run release <version>` — bumps the version, tests, builds, has Mozilla sign the
+   Firefox build (keys in `.env`), tags and pushes, creates the GitHub Release
+   (`swiftskip-firefox.xpi` + `swiftskip-chrome.zip`), and only then adds the version to
+   `updates.json`, which Firefox/Zen installs check for automatic updates.
+
+Every version number can be signed only once, so a failed release needs a new number
+if Mozilla already accepted the upload.

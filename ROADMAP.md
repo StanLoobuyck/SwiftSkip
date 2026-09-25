@@ -75,9 +75,10 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 ## Phase 6 — Sharing with friends (no public stores)
 
 - [x] `npm run sign`: Mozilla-signed unlisted .xpi for permanent install in Firefox/Zen
-- [ ] Firefox/Zen: automatic updates via a self-hosted `update_url` (update manifest on GitHub)
-- [ ] GitHub Release per version with the signed .xpi + Chrome zip
-- [ ] Short install guide for friends (Zen/Firefox: .xpi; Chrome/Edge/Brave: "Load unpacked", or Chrome Web Store *unlisted* for auto-updates)
-- [ ] `CHANGELOG.md`, semantic versioning
+- [x] Firefox/Zen: automatic updates via a self-hosted `update_url` (`updates.json` in the repo)
+- [x] `npm run release <version>`: GitHub Release with the signed .xpi + Chrome zip (fixed "latest" download links)
+- [x] Install guides for friends (README_NL.md / README_EN.md)
+- [ ] Optional: Chrome Web Store *unlisted* ($5 once) for automatic Chrome updates
+- [x] `CHANGELOG.md`, semantic versioning
 - [x] "Report a problem" link (Settings → About)
 - [ ] Safari — only if a friend needs it (needs a Mac + €99/year Apple Developer account)

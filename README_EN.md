@@ -1,108 +1,44 @@
-# SwiftSkip - Installation Guide (English)
+# SwiftSkip — guide
 
-## Overview
+SwiftSkip makes Toledo (Kaltura) lecture recordings nicer to watch:
 
-SwiftSkip is a powerful Chrome/Edge/Firefox extension that provides full keyboard control for video playback on the Toledo/Ultra platforms used at KU Leuven.
+- **Keyboard shortcuts** to skip, pause, speed up/slow down, change the volume … — even without clicking in the player first
+- **Continue where you left off** when you reopen a lecture
+- **Remembers your playback speed**
+- **Download lectures** as `.mp4`, with a clear name (course – lecture – date)
 
-**Features:**
-- Skip videos (forward/backward)
-- Adjust volume
-- Change playback speed
-- Mute/unmute
-- Fullscreen control
-- Seek to position
-- Fully customizable keybindings
+Works in **Zen, Firefox, LibreWolf** and **Chrome, Edge, Brave, Opera, Vivaldi, Arc**.
 
 ---
 
-## Installation
+## Installing
 
-### Chrome Installation
+### Zen, Firefox or LibreWolf (recommended: updates itself)
 
-#### Step 1: Download the package
-1. Navigate to the extension download location
-2. Download the SwiftSkip package
-3. Extract it to a folder of your choice
+1. Download **[swiftskip-firefox.xpi](https://github.com/StanLoobuyck/SwiftSkip/releases/latest/download/swiftskip-firefox.xpi)**.
+2. Open `about:addons`, click the **gear** (⚙) → **Install Add-on From File…** and choose the downloaded file. (Dragging the file into the window works too.)
+3. Click **Add**.
 
-#### Step 2: Open Chrome Extensions
-1. Open **Google Chrome**
-2. Click the menu in the top-right
-3. Go to **More tools** → **Extensions**
-4. Or open directly: `chrome://extensions/`
+New versions are then installed **automatically**.
 
-#### Step 3: Enable Developer Mode
-- Toggle **"Developer mode"** on (top-right corner)
+### Chrome, Edge, Brave, Opera, Vivaldi or Arc
 
-#### Step 4: Load the extension
-1. Click **"Load unpacked"** (top-left area)
-2. Navigate to the SwiftSkip folder
-3. Select the folder and click **"Select Folder"**
-4. The extension now appears in your list
+1. Download **[swiftskip-chrome.zip](https://github.com/StanLoobuyck/SwiftSkip/releases/latest/download/swiftskip-chrome.zip)** and unzip it into a folder you'll **keep** (e.g. `Documents/SwiftSkip`). Deleting the folder removes the extension.
+2. Open `chrome://extensions` (Edge: `edge://extensions`).
+3. Turn on **Developer mode** (top right; in Edge on the left).
+4. Click **Load unpacked** and choose the unzipped folder.
 
-Done! - SwiftSkip is now active in Chrome
+**Updating:** Chrome doesn't update this by itself. For a new version, download the zip again, unzip it **over the same folder**, and click the **reload icon** (↻) on SwiftSkip in `chrome://extensions`.
+
+### Pin the icon
+
+Click the **puzzle piece** next to the address bar and pin SwiftSkip. Its menu lets you download the lecture, change the speed and open the settings.
 
 ---
 
-### Edge Installation
+## Using it
 
-#### Step 1: Download the package
-1. Navigate to the extension download location
-2. Download the SwiftSkip package
-3. Extract it to a folder of your choice
-
-#### Step 2: Open Edge Extensions
-1. Open **Microsoft Edge**
-2. Click the menu in the top-right
-3. Go to **Extensions** → **Manage extensions**
-4. Or open directly: `edge://extensions/`
-
-#### Step 3: Enable Developer Mode
-- Toggle **"Developer mode"** on (bottom-left corner)
-
-#### Step 4: Load the extension
-1. Click **"Load unpacked"** (left side)
-2. Navigate to the SwiftSkip folder
-3. Select the folder and click **"Select folder"**
-4. The extension now appears in your list
-
-Done! - SwiftSkip is now active in Edge
-
----
-
-### Firefox Installation
-
-#### Step 1: Download the package
-1. Navigate to the extension download location
-2. Download the SwiftSkip package
-3. Extract it to a folder of your choice
-
-#### Step 2: Open Firefox Add-ons Screen
-1. Open **Mozilla Firefox**
-2. Click the **hamburger menu** in the top-right
-3. Go to **Add-ons and themes**
-4. Or open directly: `about:addons`
-
-#### Step 3: Open Debugging Settings
-2. Click the **gear icon** in the top-right
-2. Select **"Debug Add-ons"**
-3. Or open directly: `about:debugging#/runtime/this-firefox`
-
-#### Step 4: Load the extension
-1. Click **"Load Temporary Add-on..."**
-2. Navigate to the SwiftSkip folder
-3. Select the **`manifest.json`** file
-4. Click **"Select"**
-5. The extension now appears in your Add-ons list
-
-Note: In Firefox, you must reload the extension each time you restart Firefox, as it loads as "temporary". For permanent installation, use Firefox ESR or the alternative method.
-
-Done! - SwiftSkip is now active in Firefox
-
----
-
-## Keyboard Shortcuts
-
-Shortcuts work as soon as a lecture is open — you don't have to click inside the player first. Press `?` on a lecture to see them all.
+Open a lecture recording in Toledo. Press **`?`** to see every shortcut.
 
 | Action | Keys |
 |--------|------|
@@ -116,53 +52,35 @@ Shortcuts work as soon as a lecture is open — you don't have to click inside t
 | Jump to 0% – 90% | `0` – `9` (on AZERTY without Shift too) |
 | Show all shortcuts | `?` |
 
-Every shortcut can be changed, and each action can have two keys (with Shift, Ctrl or Alt if you like).
+**Downloading:** click **Download** at the top left of the player (or in the icon's menu). **‹** collapses the button into a small circle; during a download the circle shows the progress.
 
----
+### Settings
 
-## Settings
+Click the icon → **Settings**:
 
-Click the SwiftSkip icon for the quick controls (download, speed, skip interval). **Settings** opens the full settings page:
-
-- **Skip interval** and **speed steps** (0.25× or 0.1×, from 0.25× to 4×)
-- **Remember playback speed** — new lectures start at the speed you last chose
-- **Continue where you left off** — reopening a lecture jumps back to where you stopped
-- **Keyboard shortcuts** — click a key to change it; **Reset to defaults** restores them
 - **Language** — English or Dutch; *Automatic* follows your browser
+- **Skip interval** and **speed steps** (0.25× or 0.1×, from 0.25× to 4×)
+- **Remember playback speed** and **Continue where you left off**
+- **Keyboard shortcuts** — click a key to change it (up to two keys per action, also with Shift/Ctrl/Alt)
+- **Sites** — SwiftSkip always works on Toledo and in Kaltura players; turn it on elsewhere with **Enable on …** in the icon's menu
 
 ---
 
 ## Troubleshooting
 
-### Extension not working on Toledo/Ultra
+**Shortcuts do nothing**
+- Is SwiftSkip on? (switch in the icon's menu)
+- Typing in a text field? Shortcuts are deliberately off there.
+- Reload the page once.
 
-**Make sure:**
-- You are on a Toledo or Ultra platform (kuleuven.cloud or kuleuven.be)
-- The extension is enabled in your browser settings
-- No content blocking is interfering (check console)
+**No download button**
+- Play the recording for a few seconds; the button appears once the video has loaded.
 
-### Keyboard commands not working
+**The icon isn't visible (Zen)**
+- Zen sometimes hides the extensions button. In `about:config`, set `zen.theme.hide-unified-extensions-button` to `false`, then pin SwiftSkip.
 
-1. Verify the page has an **active video element**
-2. Ensure focus is NOT on a **text input field**
-3. Try disabling and re-enabling the extension
-
-### Firefox: Extension stops working after restart
-
-This is normal behavior for temporarily loaded add-ons in Firefox. You can:
-- **A)** Reload the extension via `about:debugging`
-- **B)** Use Firefox ESR for permanent installation
+**Something else?** Report it on [GitHub](https://github.com/StanLoobuyck/SwiftSkip/issues), or via SwiftSkip's menu → Settings → *Report a problem*.
 
 ---
 
-## License
-
-SwiftSkip is open source under the [MIT license](LICENSE). It is an independent student project, not affiliated with, endorsed by or supported by KU Leuven.
-
----
-
-## Questions or Feedback?
-
-Please contact support or report issues through the support channel.
-
-Enjoy SwiftSkip!
+SwiftSkip is an independent, open-source student project ([MIT license](LICENSE)). It is not affiliated with, endorsed by or supported by KU Leuven, and collects no data ([privacy](PRIVACY.md)). Downloaded recordings are for your personal study only — please don't share them.
