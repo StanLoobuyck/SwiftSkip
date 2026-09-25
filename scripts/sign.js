@@ -14,7 +14,7 @@
 // source (git archive of HEAD) is uploaded along with it. Commit first.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -58,9 +58,13 @@ const result = await webExt.cmd.sign({
   uploadSourceCode: sourceZip,
 });
 
-if (!result.success) {
-  console.error("Signing failed.");
+const [downloaded] = result.downloadedFiles || [];
+if (!downloaded) {
+  console.error("Signing failed: no signed file was downloaded.");
   process.exit(1);
 }
-console.log(`\n✔ Signed: ${result.downloadedFiles.map((f) => join(artifactsDir, f)).join(", ")}`);
+// AMO names it after an internal hash; give it a recognisable name.
+const signed = join(artifactsDir, `swiftskip-firefox-${version}-signed.xpi`);
+renameSync(join(artifactsDir, downloaded), signed);
+console.log(`\n✔ Signed: ${signed}`);
 console.log("Install it by dragging the .xpi into Firefox/Zen (or about:addons → ⚙ → Install Add-on From File).");
