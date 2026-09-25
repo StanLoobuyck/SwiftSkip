@@ -6,6 +6,7 @@
 
 import { buildLectureTitle, sanitizeFilename } from "../shared/filename.js";
 import { ext } from "../shared/ext.js";
+import { describeError } from "../shared/errors.js";
 import { startSiteManagement } from "./sites.js";
 
 export { ext };
@@ -31,7 +32,9 @@ function createState(tabId) {
     eta: null,
     type: null,
     downloadId: null,
-    error: null,
+    error: null, // English, for logs; the UI shows errorCode/errorParams translated
+    errorCode: null,
+    errorParams: null,
   };
 }
 
@@ -119,6 +122,8 @@ async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
       available: false,
       phase: "No lecture detected",
       error: "No lecture stream has been detected yet.",
+      errorCode: "errNoStream",
+      errorParams: {},
     });
   }
 
@@ -147,17 +152,23 @@ async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
       jobId: resolvedJobId,
     });
   } catch (error) {
-    response = { ok: false, error: errorMessage(error) };
+    response = { ok: false, ...describeError(error) };
   }
 
   if (response && response.canceled) {
-    return setDownloadState(tabId, { active: false, phase: "Canceled", percent: 0, error: null });
+    return setDownloadState(tabId, { active: false, phase: "Canceled", percent: 0, error: null, errorCode: null });
   }
 
   if (!response || response.ok === false) {
     const error = (response && response.error) || "Download failed.";
     console.error("SwiftSkip download failed:", error);
-    return setDownloadState(tabId, { active: false, phase: "Download failed", error });
+    return setDownloadState(tabId, {
+      active: false,
+      phase: "Download failed",
+      error,
+      errorCode: (response && response.errorCode) || (response && response.error ? null : "errUnknown"),
+      errorParams: (response && response.errorParams) || {},
+    });
   }
 
   return setDownloadState(tabId, {
@@ -167,6 +178,7 @@ async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
     type: response.type,
     downloadId: response.downloadId ?? null,
     error: null,
+    errorCode: null,
   });
 }
 
@@ -267,6 +279,12 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
 
   startSiteManagement();
   if (__DEV__) devReloadTestPages();
+
+  // First install: a short welcome (not for dev builds, which "install" on
+  // every npm run dev:*).
+  ext.runtime.onInstalled.addListener(({ reason }) => {
+    if (reason === "install" && !__DEV__) ext.tabs.create({ url: ext.runtime.getURL("welcome.html") });
+  });
 }
 
 // Dev builds (npm run dev:*): after a rebuild, reload open test pages so they

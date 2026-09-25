@@ -21,6 +21,9 @@ import {
   saveSettings,
   watchSettings,
 } from "../shared/storage.js";
+import { LANGUAGE_NAMES, LANGUAGE_OPTIONS, localizePage, setLanguage, t } from "../shared/i18n.js";
+import { radioGroup } from "../shared/radio-group.js";
+import { groupLabel } from "../shared/shortcuts.js";
 
 const $ = (id) => document.getElementById(id);
 let settings = null;
@@ -34,24 +37,11 @@ function el(tag, className, text) {
 
 // ─── General ──────────────────────────────────────────────────────────────────
 
-function segmented(container, options, current, label, onPick) {
-  container.replaceChildren(
-    ...options.map((value) => {
-      const button = el("button", null, label(value));
-      button.type = "button";
-      button.setAttribute("role", "radio");
-      button.setAttribute("aria-checked", String(value === current));
-      button.addEventListener("click", () => onPick(value));
-      return button;
-    }),
-  );
-}
-
 async function renderForgetPositions() {
   const count = await countResumePositions();
   const button = $("forget-positions");
   button.hidden = count === 0;
-  button.textContent = `Forget ${count} saved position${count === 1 ? "" : "s"}`;
+  button.textContent = t("forgetPositions", { count });
 }
 
 function renderGeneral() {
@@ -60,15 +50,19 @@ function renderGeneral() {
   $("resume").checked = settings.resumePlayback;
   $("remember-speed-desc").textContent =
     settings.preferredSpeed !== 1
-      ? `New lectures start at the speed you last chose (now ${formatSpeed(settings.preferredSpeed)}).`
-      : "New lectures start at the speed you last chose.";
+      ? t("rememberSpeedDescNow", { speed: formatSpeed(settings.preferredSpeed) })
+      : t("rememberSpeedDesc");
 
-  segmented($("skip-options"), SKIP_OPTIONS, settings.skipSeconds, (s) => `${s}s`, (skipSeconds) =>
-    saveSettings({ skipSeconds }),
-  );
-  segmented($("step-options"), SPEED_STEP_OPTIONS, settings.speedStep, (s) => formatSpeed(s), (speedStep) =>
-    saveSettings({ speedStep }),
-  );
+  // Pick → update locally and re-render at once (storage echoes back later).
+  const pick = (patch) => {
+    settings = { ...settings, ...patch };
+    saveSettings(patch);
+    render();
+  };
+  radioGroup($("language-options"), LANGUAGE_OPTIONS, settings.language,
+    (l) => (l === "auto" ? t("languageAuto") : LANGUAGE_NAMES[l]), (language) => pick({ language }));
+  radioGroup($("skip-options"), SKIP_OPTIONS, settings.skipSeconds, (s) => `${s}s`, (skipSeconds) => pick({ skipSeconds }));
+  radioGroup($("step-options"), SPEED_STEP_OPTIONS, settings.speedStep, (s) => formatSpeed(s), (speedStep) => pick({ speedStep }));
 }
 
 $("enabled").addEventListener("change", (e) => saveSettings({ enabled: e.target.checked }));
@@ -80,6 +74,9 @@ $("forget-positions").addEventListener("click", async () => {
 });
 
 // ─── Shortcut editor ──────────────────────────────────────────────────────────
+
+const action = (id) => ACTIONS.find((a) => a.id === id);
+const actionLabel = (id) => action(id).label;
 
 let recording = null; // { actionId, index } while waiting for a key press
 
@@ -93,15 +90,15 @@ function bindingButton(actionId, binding, index) {
   button.type = "button";
   if (recording && recording.actionId === actionId && recording.index === index) {
     button.classList.add("is-recording");
-    button.textContent = "Press a key…";
-    button.setAttribute("aria-label", "Recording — press a key, Esc to cancel");
+    button.textContent = t("pressAKey");
+    button.setAttribute("aria-label", t("recordingAria"));
   } else {
     bindingParts(binding).forEach((part, i) => {
       if (i) button.append(el("span", "plus", "+"));
       button.append(el("kbd", null, part));
     });
-    button.title = "Click to change";
-    button.setAttribute("aria-label", `${formatBinding(binding)} — click to change`);
+    button.title = t("clickToChange");
+    button.setAttribute("aria-label", `${action(actionId).label}: ${t("bindingAria", { key: formatBinding(binding) })}`);
   }
   button.addEventListener("click", () => startRecording(actionId, index));
   return button;
@@ -119,13 +116,13 @@ function shortcutRow(action) {
   if (addingHere) {
     keys.append(bindingButton(action.id, null, bindings.length));
   } else if (!bindings.length) {
-    keys.append(el("span", "binding-empty", "None"));
+    keys.append(el("span", "binding-empty", t("none")));
   }
   if (bindings.length < MAX_BINDINGS && !addingHere) {
     const add = el("button", "icon-btn add-binding", "+");
     add.type = "button";
-    add.title = "Add a key";
-    add.setAttribute("aria-label", `Add a key for ${action.label}`);
+    add.title = t("addKey");
+    add.setAttribute("aria-label", t("addKeyFor", { action: action.label }));
     add.addEventListener("click", () => startRecording(action.id, bindings.length));
     keys.append(add);
   }
@@ -142,11 +139,11 @@ function renderShortcuts() {
     if (group === "Jump") {
       const details = el("details", "jump");
       details.open = Boolean(recording && recording.actionId.startsWith("seek_")) || container.querySelector("details.jump")?.open;
-      details.append(el("summary", null, "Jump to 0% – 90%"));
+      details.append(el("summary", null, t("jumpSummary")));
       actions.forEach((a) => details.append(shortcutRow(a)));
-      nodes.push(el("h3", null, "Jump"), details);
+      nodes.push(el("h3", null, groupLabel(group)), details);
     } else {
-      nodes.push(el("h3", null, group), ...actions.map(shortcutRow));
+      nodes.push(el("h3", null, groupLabel(group)), ...actions.map(shortcutRow));
     }
   }
   container.replaceChildren(...nodes);
@@ -190,7 +187,7 @@ document.addEventListener(
     const binding = eventToBinding(event);
     if (!binding) return; // a modifier on its own — wait for the actual key
     if (RESERVED_BINDINGS.has(binding)) {
-      notice(`${formatBinding(binding)} can't be used — it's needed to move around the page.`);
+      notice(t("reservedKey", { key: formatBinding(binding) }));
       return;
     }
 
@@ -205,8 +202,7 @@ document.addEventListener(
       if (at === -1 || (action.id === actionId && at === index)) continue;
       list.splice(at, 1);
       if (action.id !== actionId) {
-        const label = ACTIONS.find((a) => a.id === actionId).label;
-        message = `${formatBinding(binding)} was used for “${action.label}”. It now does “${label}”.`;
+        message = t("movedKey", { key: formatBinding(binding), from: action.label, to: actionLabel(actionId) });
       }
     }
 
@@ -228,7 +224,7 @@ document.addEventListener("click", (event) => {
 $("reset-shortcuts").addEventListener("click", () => {
   recording = null;
   saveShortcuts(structuredClone(DEFAULT_SHORTCUTS));
-  notice("Shortcuts reset to the defaults.");
+  notice(t("resetDone"));
   renderShortcuts();
 });
 
@@ -237,13 +233,13 @@ $("reset-shortcuts").addEventListener("click", () => {
 async function renderSites() {
   const list = $("site-list");
   const builtIn = el("li");
-  builtIn.append(el("span", null, "Toledo (KU Leuven) and Kaltura players"), el("span", "builtin", "Always on"));
+  builtIn.append(el("span", null, t("sitesBuiltIn")), el("span", "builtin", t("alwaysOn")));
   const rows = [builtIn];
   for (const pattern of await enabledSites()) {
     const row = el("li");
-    const remove = el("button", "btn btn-secondary btn-small", "Remove");
+    const remove = el("button", "btn btn-secondary btn-small", t("remove"));
     remove.type = "button";
-    remove.setAttribute("aria-label", `Remove ${patternHost(pattern)}`);
+    remove.setAttribute("aria-label", t("removeSite", { site: patternHost(pattern) }));
     // Takes effect for new page loads; the background unregisters the script.
     remove.addEventListener("click", () => ext.permissions.remove({ origins: [pattern] }));
     row.append(el("span", null, patternHost(pattern)), remove);
@@ -258,13 +254,15 @@ ext.permissions.onRemoved.addListener(renderSites);
 // ─── Start ────────────────────────────────────────────────────────────────────
 
 function render() {
+  setLanguage(settings.language);
+  localizePage();
+  document.title = t("settingsPageTitle");
+  $("version-line").textContent = t("settingsVersion", { version: ext.runtime.getManifest().version });
   renderGeneral();
   renderShortcuts();
   renderForgetPositions();
   renderSites();
 }
-
-$("version").textContent = ext.runtime.getManifest().version;
 
 loadSettings().then((loaded) => {
   settings = loaded;

@@ -1,7 +1,8 @@
 # SwiftSkip roadmap
 
 Goal: a version (v4.0) that is reliable on 2-hour lectures, safe to install,
-listed in the Firefox and Chrome stores, and easy to share with students.
+and easy to share with a small group of friends (10–20 people). No public
+store listings: see Phase 6.
 
 Suggested order: **0 → 3 (permissions + Firefox ID) → 1 → 2 / 4 / 5 → 6**.
 Items marked 🔍 first need a look at a real Toledo lecture page.
@@ -50,18 +51,19 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 - [x] New Firefox add-on ID that doesn't suggest an official KU Leuven product (`swiftskip@stanloobuyck.github.io`; fixed once signed)
 - [x] "Not affiliated with KU Leuven" disclaimer in the READMEs
 - [x] "Personal study use only" note (README, settings page, privacy policy)
-- [ ] Stan: check KU Leuven's rules on lecture recordings before publishing
+- [x] KU Leuven's rules (OER art. 99): decided to keep downloads as is — private use + friends only, with the "personal study only" note
 - [x] Filenames: tabs/newlines in titles become spaces, not `_`
 
 ## Phase 4 — UX & languages
 
-- [ ] Dutch + English (`_locales/`, follows browser language)
+- [x] Dutch + English; "Automatic" follows the browser, or pick one in Settings (both bundled, switchable live)
+- [x] Errors and download phases translated too (error codes instead of English text)
 - [x] Options page for settings/keybinds (instead of the cramped popup)
-- [ ] Welcome page on first install
+- [x] Welcome page on first install (how it works + pin the icon), with a language switch
 - [x] Popup shows what was detected for the current tab
 - [x] After an install/update, SwiftSkip starts in already-open tabs (no refresh needed)
 - [x] Light/dark follows the system
-- [ ] Full keyboard + screen-reader pass over popup and settings page
+- [x] Accessibility: keyboard-operable radio groups (arrow keys), progressbar/alert/live-region roles, labelled controls, WCAG AA contrast, "reduce motion" respected
 
 ## Phase 5 — Testing & code quality
 
@@ -70,13 +72,12 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 - [ ] Sanitized real Kaltura page as a test fixture
 - [ ] ESLint + Prettier
 
-## Phase 6 — Publishing
+## Phase 6 — Sharing with friends (no public stores)
 
-- [x] `npm run sign`: Mozilla-signed unlisted .xpi for permanent install in your own Firefox/Zen
-- [ ] Firefox Add-ons (free) — also covers Zen, LibreWolf
-- [ ] Chrome Web Store ($5 once) — also Brave, Opera, Vivaldi, Arc
-- [ ] Edge Add-ons (free, same zip as Chrome)
-- [ ] README / small site with GIF demo and install buttons
-- [ ] "Report a problem" link to GitHub Issues in the popup
+- [x] `npm run sign`: Mozilla-signed unlisted .xpi for permanent install in Firefox/Zen
+- [ ] Firefox/Zen: automatic updates via a self-hosted `update_url` (update manifest on GitHub)
+- [ ] GitHub Release per version with the signed .xpi + Chrome zip
+- [ ] Short install guide for friends (Zen/Firefox: .xpi; Chrome/Edge/Brave: "Load unpacked", or Chrome Web Store *unlisted* for auto-updates)
 - [ ] `CHANGELOG.md`, semantic versioning
-- [ ] Safari — later (needs a Mac + €99/year Apple Developer account)
+- [x] "Report a problem" link (Settings → About)
+- [ ] Safari — only if a friend needs it (needs a Mac + €99/year Apple Developer account)

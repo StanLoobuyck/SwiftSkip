@@ -128,6 +128,7 @@ Click the SwiftSkip icon for the quick controls (download, speed, skip interval)
 - **Remember playback speed** — new lectures start at the speed you last chose
 - **Continue where you left off** — reopening a lecture jumps back to where you stopped
 - **Keyboard shortcuts** — click a key to change it; **Reset to defaults** restores them
+- **Language** — English or Dutch; *Automatic* follows your browser
 
 ---
 

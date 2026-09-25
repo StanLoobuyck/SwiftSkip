@@ -122,12 +122,13 @@ Elke sneltoets kan aangepast worden, en elke actie kan twee toetsen hebben (even
 
 ## Instellingen
 
-Klik op het SwiftSkip-icoon voor de snelle bediening (downloaden, snelheid, spronginterval). **Settings** opent de volledige instellingenpagina:
+Klik op het SwiftSkip-icoon voor de snelle bediening (downloaden, snelheid, spronginterval). **Instellingen** opent de volledige instellingenpagina:
 
 - **Spronginterval** en **snelheidsstappen** (0,25× of 0,1×, van 0,25× tot 4×)
 - **Afspeelsnelheid onthouden** — nieuwe lessen starten aan de snelheid die u laatst koos
 - **Verdergaan waar u gebleven was** — een les opnieuw openen springt terug naar waar u stopte
-- **Sneltoetsen** — klik op een toets om ze te wijzigen; **Reset to defaults** zet ze terug
+- **Sneltoetsen** — klik op een toets om ze te wijzigen; **Standaard herstellen** zet ze terug
+- **Taal** — Nederlands of Engels; *Automatisch* volgt je browser
 
 ---
 

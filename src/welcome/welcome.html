@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SwiftSkip</title>
+    <link rel="icon" href="icons/icon32.png" />
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="welcome.css" />
+  </head>
+  <body>
+    <main class="welcome">
+      <div class="lang segmented" id="language-options" role="radiogroup" aria-label="Language / Taal"></div>
+
+      <img class="logo" src="icons/icon128.png" alt="" width="72" height="72" />
+      <h1 data-i18n="welcomeTitle"></h1>
+      <p class="intro" data-i18n="welcomeIntro"></p>
+
+      <ol class="steps">
+        <li>
+          <span class="num" aria-hidden="true">1</span>
+          <div>
+            <h2 data-i18n="welcomeStep1Title"></h2>
+            <p data-i18n="welcomeStep1"></p>
+          </div>
+        </li>
+        <li>
+          <span class="num" aria-hidden="true">2</span>
+          <div>
+            <h2 data-i18n="welcomeStep2Title"></h2>
+            <p data-i18n="welcomeStep2"></p>
+          </div>
+        </li>
+        <li>
+          <span class="num" aria-hidden="true">3</span>
+          <div>
+            <h2 data-i18n="welcomeStep3Title"></h2>
+            <p data-i18n="welcomeStep3"></p>
+          </div>
+        </li>
+      </ol>
+
+      <button class="btn btn-primary" id="open-settings" type="button" data-i18n="openSettings"></button>
+      <p class="fine" data-i18n="aboutText"></p>
+    </main>
+    <script src="welcome.js"></script>
+  </body>
+</html>

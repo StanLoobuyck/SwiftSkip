@@ -8,6 +8,7 @@
 // Only the TS→MP4 transmuxer, not all of mux.js (FLV, inspectors, …).
 import { Transmuxer } from "mux.js/cjs/mp4/transmuxer.js";
 import { chooseBestVariant, parseMediaPlaylist } from "./hls.js";
+import { CodedError, describeError } from "./errors.js";
 
 const downloadJobs = new Map();
 
@@ -32,6 +33,7 @@ function sleep(ms, signal) {
   });
 }
 
+// what: { code, params, label } — e.g. errFetchSegment { n: 3, total: 80 }.
 async function fetchWithRetry(url, what, signal, { retries, retryDelay }) {
   // Cookies are sent where SwiftSkip has host access (Toledo, Kaltura). On
   // other CDNs a cookie request is blocked by CORS, while Kaltura's signed
@@ -41,7 +43,11 @@ async function fetchWithRetry(url, what, signal, { retries, retryDelay }) {
     try {
       const response = await fetch(url, { credentials, signal });
       if (!response.ok) {
-        throw new Error(`Could not fetch ${what} (HTTP ${response.status}).`);
+        throw new CodedError(
+          what.code,
+          { ...what.params, status: response.status },
+          `Could not fetch ${what.label} (HTTP ${response.status}).`,
+        );
       }
       return response;
     } catch (error) {
@@ -58,12 +64,13 @@ async function fetchWithRetry(url, what, signal, { retries, retryDelay }) {
 }
 
 async function getSegmentUrls(manifestUrl, signal, opts) {
-  const manifestText = await (await fetchWithRetry(manifestUrl, "playlist", signal, opts)).text();
+  const playlist = { code: "errFetchPlaylist", params: {}, label: "playlist" };
+  const manifestText = await (await fetchWithRetry(manifestUrl, playlist, signal, opts)).text();
   const variant = chooseBestVariant(manifestText, manifestUrl);
   if (!variant) {
     return parseMediaPlaylist(manifestText, manifestUrl);
   }
-  const mediaText = await (await fetchWithRetry(variant.url, "playlist", signal, opts)).text();
+  const mediaText = await (await fetchWithRetry(variant.url, playlist, signal, opts)).text();
   return parseMediaPlaylist(mediaText, variant.url);
 }
 
@@ -83,7 +90,12 @@ async function downloadSegments(segmentUrls, signal, opts, report) {
     while (next < total && !failure) {
       const index = next++;
       try {
-        const response = await fetchWithRetry(segmentUrls[index], `segment ${index + 1}/${total}`, signal, opts);
+        const segment = {
+          code: "errFetchSegment",
+          params: { n: index + 1, total },
+          label: `segment ${index + 1}/${total}`,
+        };
+        const response = await fetchWithRetry(segmentUrls[index], segment, signal, opts);
         const data = await response.arrayBuffer();
         blobs[index] = new Blob([data]);
         bytes += data.byteLength;
@@ -140,7 +152,8 @@ export async function remuxToMp4(tsBlobs, signal, report = () => {}) {
 
 // onProgress(progress) receives { jobId, tabId, phase, percent, downloaded?, total?, speed?, eta? }.
 // saveFile(url, title, extension) must start a browser download and resolve (to its id) once it has.
-// Resolves to { ok: true, type, downloadId } | { ok: false, canceled: true } | { ok: false, error }.
+// Resolves to { ok: true, type, downloadId } | { ok: false, canceled: true }
+//           | { ok: false, error, errorCode, errorParams } (see shared/errors.js).
 export async function runHlsDownload({ url, title, tabId, jobId, onProgress, saveFile, ...options }) {
   const opts = { ...DEFAULTS, ...options };
   const job = { id: jobId, abortController: new AbortController() };
@@ -184,7 +197,7 @@ export async function runHlsDownload({ url, title, tabId, jobId, onProgress, sav
       return { ok: false, canceled: true };
     }
     console.error("SwiftSkip download failed:", error);
-    return { ok: false, error: error && error.message ? error.message : String(error) };
+    return { ok: false, ...describeError(error) };
   } finally {
     downloadJobs.delete(jobId);
   }

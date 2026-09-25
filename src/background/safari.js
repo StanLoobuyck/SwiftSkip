@@ -4,6 +4,11 @@
 import { startBackground } from "./core.js";
 
 startBackground({
-  runDownload: async () => ({ ok: false, error: "Lecture downloads are not supported in Safari yet." }),
+  runDownload: async () => ({
+    ok: false,
+    error: "Lecture downloads are not supported in Safari yet.",
+    errorCode: "errSafari",
+    errorParams: {},
+  }),
   cancelDownload: async () => ({ ok: true, canceled: false }),
 });

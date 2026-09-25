@@ -3,6 +3,7 @@
 // back to the service worker via messages.
 
 import { cancelHlsDownload, runHlsDownload } from "../shared/downloader.js";
+import { CodedError } from "../shared/errors.js";
 
 function onProgress(progress) {
   chrome.runtime.sendMessage({ action: "relayLectureDownloadProgress", ...progress });
@@ -17,7 +18,7 @@ async function saveFile(url, title, extension) {
   });
 
   if (!response || !response.ok) {
-    throw new Error(response && response.error ? response.error : "Chrome did not start the download.");
+    throw new CodedError("errNotStarted", {}, response && response.error ? response.error : "Chrome did not start the download.");
   }
   return response.downloadId;
 }

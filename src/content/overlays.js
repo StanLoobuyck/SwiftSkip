@@ -1,7 +1,8 @@
 // In-player overlays built with DOM APIs (no innerHTML): the shortcut sheet
 // shown with "?" and the "Resumed at …" toast. Styles live in style.css.
 
-import { ACTIONS, bindingParts } from "../shared/shortcuts.js";
+import { ACTIONS, bindingParts, groupLabel } from "../shared/shortcuts.js";
+import { t } from "../shared/i18n.js";
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -37,13 +38,13 @@ export function openShortcutSheet({ parent, place, shortcuts, skipSeconds }) {
   closeShortcutSheet();
   sheetEl = el("div", "swiftskip-sheet");
   sheetEl.setAttribute("role", "dialog");
-  sheetEl.setAttribute("aria-label", "SwiftSkip keyboard shortcuts");
+  sheetEl.setAttribute("aria-label", t("sheetTitle"));
 
   const header = el("div", "swiftskip-sheet-header");
-  header.append(el("span", "swiftskip-sheet-title", "Keyboard shortcuts"));
+  header.append(el("span", "swiftskip-sheet-title", t("sheetTitle")));
   const close = el("button", "swiftskip-sheet-close", "×");
   close.type = "button";
-  close.setAttribute("aria-label", "Close");
+  close.setAttribute("aria-label", t("close"));
   close.addEventListener("click", closeShortcutSheet);
   header.append(close);
   sheetEl.append(header);
@@ -52,14 +53,14 @@ export function openShortcutSheet({ parent, place, shortcuts, skipSeconds }) {
   const groups = [...new Set(ACTIONS.map((a) => a.group))].filter((g) => g !== "Jump");
   for (const group of groups) {
     const section = el("section", "swiftskip-sheet-group");
-    section.append(el("h3", null, group));
+    section.append(el("h3", null, groupLabel(group)));
     for (const action of ACTIONS.filter((a) => a.group === group)) {
       const bindings = shortcuts[action.id] || [];
       if (!bindings.length) continue;
       const row = el("div", "swiftskip-sheet-row");
       const label =
-        action.id === "skip_forward" ? `Forward ${skipSeconds}s`
-        : action.id === "skip_backward" ? `Back ${skipSeconds}s`
+        action.id === "skip_forward" ? t("forwardSeconds", { s: skipSeconds })
+        : action.id === "skip_backward" ? t("backSeconds", { s: skipSeconds })
         : action.label;
       row.append(el("span", "swiftskip-sheet-label", label));
       const keys = el("span", "swiftskip-sheet-bindings");
@@ -74,10 +75,10 @@ export function openShortcutSheet({ parent, place, shortcuts, skipSeconds }) {
   const jumps = ACTIONS.filter((a) => a.group === "Jump");
   const jumpKeys = jumps.map((a) => (shortcuts[a.id] || [])[0]);
   const section = el("section", "swiftskip-sheet-group");
-  section.append(el("h3", null, "Jump"));
+  section.append(el("h3", null, groupLabel("Jump")));
   if (jumpKeys.every((k, i) => k === String(i))) {
     const row = el("div", "swiftskip-sheet-row");
-    row.append(el("span", "swiftskip-sheet-label", "Jump to 0–90%"));
+    row.append(el("span", "swiftskip-sheet-label", t("jumpRange")));
     const keys = el("span", "swiftskip-sheet-bindings");
     keys.append(keyChips("0"), el("span", "swiftskip-plus", "–"), keyChips("9"));
     row.append(keys);
@@ -93,7 +94,7 @@ export function openShortcutSheet({ parent, place, shortcuts, skipSeconds }) {
   grid.append(section);
   sheetEl.append(grid);
 
-  sheetEl.append(el("div", "swiftskip-sheet-footer", "Change these in SwiftSkip's settings · Esc to close"));
+  sheetEl.append(el("div", "swiftskip-sheet-footer", t("sheetFooter")));
   parent.append(sheetEl);
   place(sheetEl);
 }

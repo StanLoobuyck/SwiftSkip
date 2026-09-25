@@ -48,6 +48,7 @@ async function buildTarget(target) {
     content: "content/content.js",
     popup: "popup/popup.js",
     options: "options/options.js",
+    welcome: "welcome/welcome.js",
   };
   if (target === "chrome") entries.offscreen = "offscreen/offscreen.js";
 
@@ -75,6 +76,9 @@ async function buildTarget(target) {
     ["popup/popup.css", "popup.css"],
     ["options/options.html", "options.html"],
     ["options/options.css", "options.css"],
+    ["welcome/welcome.html", "welcome.html"],
+    ["welcome/welcome.css", "welcome.css"],
+    ["_locales", "_locales"],
     ["content/style.css", "style.css"],
     ["icons", "icons"],
   ];

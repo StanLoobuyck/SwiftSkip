@@ -23,7 +23,9 @@ export function buildManifest(target, { version, dev }) {
   const base = {
     name: dev ? "SwiftSkip (dev)" : "SwiftSkip",
     version,
-    description: "Keyboard shortcuts, resume, speed memory and downloads for Toledo and other Kaltura lecture recordings.",
+    // Shown in the browser's extension list, in the browser's language.
+    description: "__MSG_appDescription__",
+    default_locale: "en",
     icons: ICONS,
     // Sites the user enables later are registered at runtime (background/sites.js).
     content_scripts: [

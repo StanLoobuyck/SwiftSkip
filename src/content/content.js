@@ -27,6 +27,7 @@ import {
   resumeKey,
 } from "../shared/playback.js";
 import { parseCourseTitle } from "../shared/filename.js";
+import { errorText, phaseLabel, setLanguage, t } from "../shared/i18n.js";
 import {
   closeShortcutSheet,
   isShortcutSheetOpen,
@@ -78,6 +79,9 @@ import {
 
   function applySettings(next) {
     settings = next;
+    setLanguage(settings.language);
+    // Relabel the idle download button in the new language.
+    if (downloadButtonEl && !isLectureDownloading) downloadButtonEl.textContent = t("downloadLecture");
     shortcutMap = buildShortcutMap(settings.shortcuts);
     if (!settings.enabled) closeShortcutSheet();
   }
@@ -341,17 +345,17 @@ import {
     downloadProgressEl.hidden = false;
     downloadProgressEl.classList.toggle("swiftskip-download-failed", failed);
     downloadProgressFillEl.style.width = `${failed ? 100 : percent}%`;
-    downloadProgressLabelEl.textContent = phase;
+    downloadProgressLabelEl.textContent = phaseLabel(phase);
     downloadProgressMetaEl.textContent = formatProgressMeta(progress);
-    downloadProgressEl.title = progress.error || "";
+    downloadProgressEl.title = errorText(progress);
 
     if (downloadButtonEl) {
       downloadButtonEl.disabled = isLectureDownloading;
       downloadButtonEl.textContent =
-        percent > 0 && isLectureDownloading ? `Downloading ${percent}%` : phase;
+        percent > 0 && isLectureDownloading ? t("downloadingPercent", { percent }) : phaseLabel(phase);
     }
     if (downloadDismissButtonEl) {
-      const label = isLectureDownloading ? "Cancel download" : "Hide download button";
+      const label = isLectureDownloading ? t("cancelDownload") : t("hideDownloadButton");
       downloadDismissButtonEl.title = label;
       downloadDismissButtonEl.setAttribute("aria-label", label);
     }
@@ -370,18 +374,18 @@ import {
     downloadProgressEl.classList.remove("swiftskip-download-failed");
     downloadProgressEl.title = "";
     downloadProgressFillEl.style.width = "0%";
-    downloadProgressLabelEl.textContent = "Preparing";
+    downloadProgressLabelEl.textContent = t("phasePreparing");
     downloadProgressMetaEl.textContent = "0%";
     isLectureDownloading = false;
     activeDownloadJobId = null;
 
     if (downloadButtonEl) {
       downloadButtonEl.disabled = false;
-      downloadButtonEl.textContent = "Download Lecture";
+      downloadButtonEl.textContent = t("downloadLecture");
     }
     if (downloadDismissButtonEl) {
-      downloadDismissButtonEl.title = "Hide download button";
-      downloadDismissButtonEl.setAttribute("aria-label", "Hide download button");
+      downloadDismissButtonEl.title = t("hideDownloadButton");
+      downloadDismissButtonEl.setAttribute("aria-label", t("hideDownloadButton"));
     }
   }
 
@@ -402,7 +406,7 @@ import {
     const jobId = activeDownloadJobId;
     if (downloadButtonEl) {
       downloadButtonEl.disabled = true;
-      downloadButtonEl.textContent = "Canceling...";
+      downloadButtonEl.textContent = t("phaseCanceling");
     }
     setDownloadProgress({ jobId, phase: "Canceling", percent: 0 });
 
@@ -413,7 +417,7 @@ import {
       },
       () => {
         resetDownloadProgress();
-        showOSD("download", null, "Download canceled");
+        showOSD("download", null, t("downloadCanceled"));
       },
     );
   }
@@ -431,14 +435,14 @@ import {
       downloadButtonEl = document.createElement("button");
       downloadButtonEl.id = "swiftskip-download-btn";
       downloadButtonEl.type = "button";
-      downloadButtonEl.textContent = "Download Lecture";
-      downloadButtonEl.title = "Download this Kaltura lecture";
+      downloadButtonEl.textContent = t("downloadLecture");
+      downloadButtonEl.title = t("downloadLectureTitle");
 
       downloadDismissButtonEl = document.createElement("button");
       downloadDismissButtonEl.id = "swiftskip-download-dismiss";
       downloadDismissButtonEl.type = "button";
-      downloadDismissButtonEl.setAttribute("aria-label", "Hide download button");
-      downloadDismissButtonEl.title = "Hide download button";
+      downloadDismissButtonEl.setAttribute("aria-label", t("hideDownloadButton"));
+      downloadDismissButtonEl.title = t("hideDownloadButton");
       downloadDismissButtonEl.textContent = "\u00d7";
 
       downloadProgressEl = document.createElement("div");
@@ -450,7 +454,7 @@ import {
 
       downloadProgressLabelEl = document.createElement("span");
       downloadProgressLabelEl.className = "swiftskip-download-progress-label";
-      downloadProgressLabelEl.textContent = "Preparing";
+      downloadProgressLabelEl.textContent = t("phasePreparing");
 
       downloadProgressMetaEl = document.createElement("span");
       downloadProgressMetaEl.className = "swiftskip-download-progress-meta";
@@ -481,15 +485,15 @@ import {
         clearTimeout(downloadResetTimer);
         downloadButtonEl.disabled = true;
         if (downloadDismissButtonEl) {
-          downloadDismissButtonEl.title = "Cancel download";
-          downloadDismissButtonEl.setAttribute("aria-label", "Cancel download");
+          downloadDismissButtonEl.title = t("cancelDownload");
+          downloadDismissButtonEl.setAttribute("aria-label", t("cancelDownload"));
         }
         setDownloadProgress({
           jobId: activeDownloadJobId,
           phase: "Preparing",
           percent: 0,
         });
-        showOSD("download", null, "Preparing download");
+        showOSD("download", null, t("preparingDownload"));
 
         // Progress (including "Complete" / "Download failed") arrives via
         // lectureDownloadProgress messages; the reply only matters if the
@@ -506,13 +510,14 @@ import {
               setDownloadProgress({
                 jobId: activeDownloadJobId,
                 phase: "Download failed",
-                error: "SwiftSkip's background script didn't respond. Reload the page and try again.",
+                error: "SwiftSkip's background script didn't respond.",
+                errorCode: "errNoBackground",
                 active: false,
               });
               return;
             }
             const state = response.state || {};
-            if (state.phase === "Complete") showOSD("download", null, "Download saved");
+            if (state.phase === "Complete") showOSD("download", null, t("downloadSaved"));
           },
         );
       });
@@ -740,7 +745,7 @@ import {
     if (!v) return;
     v.muted = !v.muted;
     if (v.muted) {
-      showOSD("mute", "mute", "Muted", 0);
+      showOSD("mute", "mute", t("muted"), 0);
     } else {
       showOSD(
         "volume",
@@ -1040,9 +1045,9 @@ import {
       showToast({
         parent: getOSDParent(),
         place: (el) => positionOverPlayer(el, "bottom"),
-        message: `Resumed at ${formatTime(saved.time)}`,
+        message: t("resumedAt", { time: formatTime(saved.time) }),
         action: {
-          label: "Start over",
+          label: t("startOver"),
           onClick: () => {
             v.currentTime = 0;
             clearResumePosition(key).catch(() => {});

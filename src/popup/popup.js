@@ -8,6 +8,8 @@ import { formatSpeed } from "../shared/playback.js";
 import { SKIP_OPTIONS } from "../shared/settings.js";
 import { isBuiltInSite, originPattern, patternHost } from "../shared/sites.js";
 import { loadSettings, saveSettings } from "../shared/storage.js";
+import { errorText, localizePage, phaseLabel, setLanguage, t } from "../shared/i18n.js";
+import { radioGroup } from "../shared/radio-group.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -60,11 +62,11 @@ function renderLecture() {
   $("site-off").hidden = siteActive || !pattern;
   if (!siteActive && pattern) {
     $("site-host").textContent = patternHost(pattern);
-    $("lecture-title").textContent = "SwiftSkip is off on this site";
-    $("lecture-hint").textContent = "Turn it on to use the shortcuts and downloads here.";
+    $("lecture-title").textContent = t("siteOffTitle");
+    $("lecture-hint").textContent = t("siteOffHint");
   } else {
-    $("lecture-title").textContent = available ? title || "Lecture recording" : "No lecture on this page";
-    $("lecture-hint").textContent = "Open a recording in Toledo to download it or control it with the keyboard.";
+    $("lecture-title").textContent = available ? title || t("lectureRecording") : t("noLecture");
+    $("lecture-hint").textContent = t("noLectureHint");
   }
   $("lecture-hint").hidden = available;
 
@@ -75,20 +77,21 @@ function renderLecture() {
   const canDownload = SUPPORTS_DOWNLOAD && available;
 
   $("download-btn").hidden = !canDownload || active || done;
-  $("download-label").textContent = failed ? "Try again" : "Download lecture";
+  $("download-label").textContent = failed ? t("tryAgain") : t("downloadLecture");
 
   $("progress").hidden = !active;
   if (active) {
     const percent = Math.max(0, Math.min(100, Math.round(Number(state.percent) || 0)));
-    $("progress-phase").textContent = phase === "Downloading" ? "Downloading" : phase || "Preparing";
+    $("progress-phase").textContent = phaseLabel(phase || "Preparing");
     $("progress-fill").style.width = `${percent}%`;
+    $("progress-bar").setAttribute("aria-valuenow", String(percent));
     $("progress-meta").textContent = formatProgressMeta(state);
   }
 
   $("done").hidden = !done;
   $("show-file").hidden = state.downloadId == null;
   $("error").hidden = !failed;
-  $("error").textContent = failed ? state.error || "Download failed." : "";
+  $("error").textContent = failed ? errorText(state) || t("errUnknown") : "";
 }
 
 $("download-btn").addEventListener("click", async () => {
@@ -98,7 +101,7 @@ $("download-btn").addEventListener("click", async () => {
   if (response && response.state) {
     download = response.state;
   } else {
-    download = { ...download, active: false, phase: "Download failed", error: "SwiftSkip's background script didn't respond." };
+    download = { ...download, active: false, phase: "Download failed", errorCode: "errNoBackground" };
   }
   renderLecture();
 });
@@ -156,22 +159,11 @@ $("speed-up").addEventListener("click", () => stepSpeed("speed_up"));
 // ─── Skip interval ────────────────────────────────────────────────────────────
 
 function renderSkip() {
-  const group = $("skip-options");
-  group.replaceChildren(
-    ...SKIP_OPTIONS.map((seconds) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.setAttribute("role", "radio");
-      button.setAttribute("aria-checked", String(seconds === settings.skipSeconds));
-      button.textContent = `${seconds}s`;
-      button.addEventListener("click", () => {
-        settings.skipSeconds = seconds;
-        saveSettings({ skipSeconds: seconds });
-        renderSkip();
-      });
-      return button;
-    }),
-  );
+  radioGroup($("skip-options"), SKIP_OPTIONS, settings.skipSeconds, (s) => `${s}s`, (seconds) => {
+    settings.skipSeconds = seconds;
+    saveSettings({ skipSeconds: seconds });
+    renderSkip();
+  });
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
@@ -197,6 +189,8 @@ $("open-shortcuts").addEventListener("click", () => openSettings("#shortcuts"));
     tabUrl = devParams.get("url") || "";
   }
   settings = await loadSettings();
+  setLanguage(settings.language);
+  localizePage();
   siteActive = await checkSiteActive();
   renderEnabled();
   renderSkip();

@@ -182,7 +182,7 @@ h2 + .setting {
 }
 
 .binding-empty {
-  color: var(--faint);
+  color: var(--muted);
   font-size: 13px;
 }
 

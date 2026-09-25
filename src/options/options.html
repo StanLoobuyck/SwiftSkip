@@ -3,55 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SwiftSkip settings</title>
+    <title>SwiftSkip</title>
     <link rel="icon" href="icons/icon32.png" />
     <link rel="stylesheet" href="ui.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <div class="page">
+    <main class="page">
       <header class="page-header">
         <img src="icons/icon48.png" alt="" width="32" height="32" />
         <div>
           <h1>SwiftSkip</h1>
-          <p class="subtle">Settings · version <span id="version"></span></p>
+          <p class="subtle" id="version-line"></p>
         </div>
       </header>
 
       <section class="card" aria-labelledby="general-title">
-        <h2 id="general-title">General</h2>
+        <h2 id="general-title" data-i18n="general"></h2>
 
         <div class="setting">
           <div class="setting-text">
-            <label class="setting-label" for="enabled">SwiftSkip on</label>
-            <p class="setting-desc">Turn off to use the player without SwiftSkip's shortcuts and extras.</p>
+            <label class="setting-label" for="enabled" data-i18n="swiftskipOn"></label>
+            <p class="setting-desc" id="enabled-desc" data-i18n="enabledDesc"></p>
           </div>
           <label class="switch">
-            <input type="checkbox" id="enabled" role="switch" />
+            <input type="checkbox" id="enabled" role="switch" aria-describedby="enabled-desc" />
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </label>
         </div>
 
         <div class="setting">
           <div class="setting-text">
-            <span class="setting-label" id="skip-label">Skip interval</span>
-            <p class="setting-desc">How far the skip shortcuts jump.</p>
+            <span class="setting-label" id="language-label" data-i18n="language"></span>
+            <p class="setting-desc" id="language-desc" data-i18n="languageDesc"></p>
           </div>
-          <div class="segmented" id="skip-options" role="radiogroup" aria-labelledby="skip-label"></div>
+          <div class="segmented" id="language-options" role="radiogroup" aria-labelledby="language-label" aria-describedby="language-desc"></div>
         </div>
 
         <div class="setting">
           <div class="setting-text">
-            <span class="setting-label" id="step-label">Speed steps</span>
-            <p class="setting-desc">How much faster or slower each press makes it (0.25× – 4×).</p>
+            <span class="setting-label" id="skip-label" data-i18n="skipInterval"></span>
+            <p class="setting-desc" id="skip-desc" data-i18n="skipDesc"></p>
           </div>
-          <div class="segmented" id="step-options" role="radiogroup" aria-labelledby="step-label"></div>
+          <div class="segmented" id="skip-options" role="radiogroup" aria-labelledby="skip-label" aria-describedby="skip-desc"></div>
         </div>
 
         <div class="setting">
           <div class="setting-text">
-            <label class="setting-label" for="remember-speed">Remember playback speed</label>
-            <p class="setting-desc" id="remember-speed-desc">New lectures start at the speed you last chose.</p>
+            <span class="setting-label" id="step-label" data-i18n="speedSteps"></span>
+            <p class="setting-desc" id="step-desc" data-i18n="speedStepsDesc"></p>
+          </div>
+          <div class="segmented" id="step-options" role="radiogroup" aria-labelledby="step-label" aria-describedby="step-desc"></div>
+        </div>
+
+        <div class="setting">
+          <div class="setting-text">
+            <label class="setting-label" for="remember-speed" data-i18n="rememberSpeed"></label>
+            <p class="setting-desc" id="remember-speed-desc"></p>
           </div>
           <label class="switch">
             <input type="checkbox" id="remember-speed" role="switch" aria-describedby="remember-speed-desc" />
@@ -61,14 +69,14 @@
 
         <div class="setting">
           <div class="setting-text">
-            <label class="setting-label" for="resume">Continue where you left off</label>
+            <label class="setting-label" for="resume" data-i18n="resume"></label>
             <p class="setting-desc">
-              Reopening a lecture jumps back to where you stopped.
+              <span id="resume-desc" data-i18n="resumeDesc"></span>
               <button class="link" id="forget-positions" type="button" hidden></button>
             </p>
           </div>
           <label class="switch">
-            <input type="checkbox" id="resume" role="switch" />
+            <input type="checkbox" id="resume" role="switch" aria-describedby="resume-desc" />
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </label>
         </div>
@@ -76,41 +84,30 @@
 
       <section class="card" id="shortcuts" aria-labelledby="shortcuts-title">
         <div class="card-head">
-          <h2 id="shortcuts-title">Keyboard shortcuts</h2>
-          <button class="btn btn-secondary btn-small" id="reset-shortcuts" type="button">Reset to defaults</button>
+          <h2 id="shortcuts-title" data-i18n="keyboardShortcuts"></h2>
+          <button class="btn btn-secondary btn-small" id="reset-shortcuts" type="button" data-i18n="resetDefaults"></button>
         </div>
-        <p class="subtle card-intro">
-          Click a key to change it, or <b>+</b> to add a second one. While recording,
-          <kbd>Esc</kbd> cancels and <kbd>Backspace</kbd> removes the key.
-          Press <kbd>?</kbd> on a lecture to see them all.
-        </p>
-        <p class="notice" id="shortcut-notice" role="status" hidden></p>
+        <p class="subtle card-intro" data-i18n="shortcutsIntro"></p>
+        <p class="notice" id="shortcut-notice" role="status" aria-live="polite" hidden></p>
         <div id="shortcut-groups"></div>
       </section>
 
       <section class="card" id="sites" aria-labelledby="sites-title">
-        <h2 id="sites-title">Sites</h2>
-        <p class="subtle card-intro">
-          SwiftSkip always works on Toledo and on Kaltura video players. To use it somewhere
-          else, open that site and choose <b>Enable</b> in the SwiftSkip popup.
-        </p>
+        <h2 id="sites-title" data-i18n="sites"></h2>
+        <p class="subtle card-intro" data-i18n="sitesIntro"></p>
         <ul class="site-list" id="site-list"></ul>
       </section>
 
       <section class="card about" aria-labelledby="about-title">
-        <h2 id="about-title">About</h2>
-        <p class="subtle">
-          SwiftSkip is an independent, open-source student project. It is not affiliated with,
-          endorsed by or supported by KU Leuven. It collects no data.
-          Downloaded recordings are for your personal study only: don't share them.
-        </p>
+        <h2 id="about-title" data-i18n="about"></h2>
+        <p class="subtle" data-i18n="aboutText"></p>
         <p class="links">
-          <a href="https://github.com/StanLoobuyck/SwiftSkip/issues/new" target="_blank" rel="noopener">Report a problem</a>
-          <a href="https://github.com/StanLoobuyck/SwiftSkip" target="_blank" rel="noopener">Source code</a>
-          <a href="https://github.com/StanLoobuyck/SwiftSkip/blob/main/PRIVACY.md" target="_blank" rel="noopener">Privacy</a>
+          <a href="https://github.com/StanLoobuyck/SwiftSkip/issues/new" target="_blank" rel="noopener" data-i18n="reportProblem"></a>
+          <a href="https://github.com/StanLoobuyck/SwiftSkip" target="_blank" rel="noopener" data-i18n="sourceCode"></a>
+          <a href="https://github.com/StanLoobuyck/SwiftSkip/blob/main/PRIVACY.md" target="_blank" rel="noopener" data-i18n="privacy"></a>
         </p>
       </section>
-    </div>
+    </main>
     <script src="options.js"></script>
   </body>
 </html>

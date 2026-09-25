@@ -6,24 +6,31 @@
 // for digits and symbols it's simply how the character is typed ("?" is
 // Shift+, on AZERTY, "1" is Shift+& there), so it's ignored.
 
+import { t } from "./i18n.js";
+
+// `group` is a stable id; `label` / groupLabel() are translated on use.
+function action(id, labelKey, group, params) {
+  return { id, group, get label() { return t(labelKey, params); } };
+}
+
 export const ACTIONS = [
-  { id: "play_pause", label: "Play / pause", group: "Playback" },
-  { id: "skip_backward", label: "Skip backward", group: "Playback" },
-  { id: "skip_forward", label: "Skip forward", group: "Playback" },
-  { id: "speed_down", label: "Slower", group: "Speed" },
-  { id: "speed_up", label: "Faster", group: "Speed" },
-  { id: "speed_reset", label: "Normal speed", group: "Speed" },
-  { id: "volume_down", label: "Volume down", group: "Volume" },
-  { id: "volume_up", label: "Volume up", group: "Volume" },
-  { id: "mute", label: "Mute", group: "Volume" },
-  { id: "fullscreen", label: "Fullscreen", group: "View" },
-  { id: "show_shortcuts", label: "Show shortcuts", group: "View" },
-  ...Array.from({ length: 10 }, (_, i) => ({
-    id: `seek_${i * 10}`,
-    label: `Jump to ${i * 10}%`,
-    group: "Jump",
-  })),
+  action("play_pause", "actionPlayPause", "Playback"),
+  action("skip_backward", "actionSkipBackward", "Playback"),
+  action("skip_forward", "actionSkipForward", "Playback"),
+  action("speed_down", "actionSpeedDown", "Speed"),
+  action("speed_up", "actionSpeedUp", "Speed"),
+  action("speed_reset", "actionSpeedReset", "Speed"),
+  action("volume_down", "actionVolumeDown", "Volume"),
+  action("volume_up", "actionVolumeUp", "Volume"),
+  action("mute", "actionMute", "Volume"),
+  action("fullscreen", "actionFullscreen", "View"),
+  action("show_shortcuts", "actionShowShortcuts", "View"),
+  ...Array.from({ length: 10 }, (_, i) => action(`seek_${i * 10}`, "actionJump", "Jump", { percent: i * 10 })),
 ];
+
+export function groupLabel(group) {
+  return t(`group${group}`);
+}
 
 export const ACTION_IDS = ACTIONS.map((action) => action.id);
 
@@ -158,7 +165,9 @@ export function bindingParts(binding) {
   // Split on "+" separators but keep a literal "+" key ("Shift++" is not produced,
   // since Shift is dropped for symbols, but "Ctrl++" is possible).
   const parts = binding.endsWith("++") ? [...binding.slice(0, -2).split("+"), "+"] : binding.split("+");
-  return parts.map((part) => KEY_LABELS[part] || (part.length === 1 ? part.toUpperCase() : part));
+  return parts.map((part) =>
+    part === "Space" ? t("keySpace") : KEY_LABELS[part] || (part.length === 1 ? part.toUpperCase() : part),
+  );
 }
 
 export function formatBinding(binding) {

@@ -475,3 +475,16 @@
     transform: translate(-50%, -100%);
   }
 }
+
+/* Respect "reduce motion": animations still run (the overlay becomes
+   visible through its animation) but finish instantly. */
+@media (prefers-reduced-motion: reduce) {
+  #swiftskip-osd,
+  #swiftskip-download-progress,
+  .swiftskip-download-progress-fill,
+  .swiftskip-sheet,
+  .swiftskip-toast {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

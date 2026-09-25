@@ -1,5 +1,7 @@
 // Playback math — pure functions, no DOM (unit-tested in test/).
 
+import { formatNumber } from "./i18n.js";
+
 // Where a skip of `seconds` from `currentTime` lands, clamped to the video.
 // `moved` is how far it actually went (less than `seconds` near the edges).
 export function computeSkip(currentTime, duration, seconds) {
@@ -43,7 +45,7 @@ export function nextSpeed(current, direction, step) {
 
 // 1 → "1×", 1.5 → "1.5×", 1.25 → "1.25×"
 export function formatSpeed(rate) {
-  return `${Number((Math.round(rate * 100) / 100).toFixed(2))}×`;
+  return `${formatNumber(Math.round(rate * 100) / 100)}×`;
 }
 
 // ─── Resume ───────────────────────────────────────────────────────────────────

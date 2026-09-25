@@ -1,5 +1,7 @@
 // HLS playlist parsing — pure functions, no browser APIs (unit-tested in test/).
 
+import { CodedError } from "./errors.js";
+
 export function resolveUrl(baseUrl, value) {
   return new URL(value.trim().replace(/^"|"$/g, ""), baseUrl).toString();
 }
@@ -49,11 +51,11 @@ export function parseMediaPlaylist(manifestText, manifestUrl) {
     (line) => line.startsWith("#EXT-X-KEY") && !/METHOD=NONE/i.test(line),
   );
   if (encrypted) {
-    throw new Error("Encrypted HLS streams are not supported by the in-browser remuxer.");
+    throw new CodedError("errEncrypted", {}, "Encrypted HLS streams are not supported by the in-browser remuxer.");
   }
 
   if (lines.some((line) => line.startsWith("#EXT-X-MAP"))) {
-    throw new Error("Fragmented MP4 HLS streams are not supported by the TS downloader.");
+    throw new CodedError("errFmp4", {}, "Fragmented MP4 HLS streams are not supported by the TS downloader.");
   }
 
   const segments = lines
@@ -61,7 +63,7 @@ export function parseMediaPlaylist(manifestText, manifestUrl) {
     .map((line) => resolveUrl(manifestUrl, line));
 
   if (!segments.length) {
-    throw new Error("No media segments were found in the HLS playlist.");
+    throw new CodedError("errNoSegments", {}, "No media segments were found in the HLS playlist.");
   }
 
   return segments;
