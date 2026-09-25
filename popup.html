@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SwiftSkip</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup">
+      <!-- Header -->
+      <header>
+        <div class="logo">
+          <img src="icon48.png" alt="SwiftSkip Logo" class="logo-icon" />
+          <span class="logo-title">SwiftSkip</span>
+        </div>
+        <label class="toggle-pill" title="Enable / disable">
+          <input type="checkbox" id="toggle-enabled" />
+          <span class="pill-track"><span class="pill-thumb"></span></span>
+        </label>
+      </header>      <div id="status-message" class="status-message" aria-live="polite"></div>
+
+      <!-- Lecture download -->
+      <div class="v-stack">
+        <div class="section-label">Lecture Download</div>
+        <div class="frosted-panel download-panel">
+          <div class="download-row">
+            <button id="popup-download-btn" class="download-primary" type="button">
+              Download Lecture
+            </button>
+            <button
+              id="popup-download-cancel"
+              class="download-cancel"
+              type="button"
+              title="Cancel download"
+              aria-label="Cancel download"
+              hidden
+            >
+              &times;
+            </button>
+          </div>
+          <div id="popup-download-progress" class="popup-download-progress" hidden>
+            <div class="popup-download-progress-top">
+              <span id="popup-download-label">Ready</span>
+              <span id="popup-download-meta">0%</span>
+            </div>
+            <div class="popup-download-track">
+              <div id="popup-download-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skip interval -->
+      <div class="v-stack">
+        <div class="section-label">Skip Interval</div>
+        <div class="frosted-panel">
+          <div class="skip-row">
+            <button class="skip-preset" data-val="5">5s</button>
+            <button class="skip-preset" data-val="10">10s</button>
+            <button class="skip-preset" data-val="15">15s</button>
+            <button class="skip-preset" data-val="30">30s</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="v-stack">
+        <div class="section-label">Controls</div>
+        <div class="frosted-panel">
+          <div class="control-group-label">Playback</div>
+          <div class="controls-grid">
+            <button class="ctrl-btn" data-action="skip" data-seconds="-10">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polygon points="19 20 9 12 19 4" />
+                <line x1="5" y1="19" x2="5" y2="5" />
+              </svg>
+              <span>−<span class="skip-hint">10</span>s</span>
+            </button>
+            <button class="ctrl-btn accent-btn" data-action="pause">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16" rx="1" />
+                <rect x="14" y="4" width="4" height="16" rx="1" />
+              </svg>
+              <span>Play/Pause</span>
+            </button>
+            <button class="ctrl-btn" data-action="skip" data-seconds="10">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polygon points="5 4 15 12 5 20" />
+                <line x1="19" y1="5" x2="19" y2="19" />
+              </svg>
+              <span>+<span class="skip-hint">10</span>s</span>
+            </button>
+          </div>
+
+          <div class="control-group-label">Volume</div>
+          <div class="controls-grid">
+            <button class="ctrl-btn" data-action="volume" data-delta="-0.1">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <line x1="23" y1="9" x2="17" y2="15" />
+                <line x1="17" y1="9" x2="23" y2="15" />
+              </svg>
+              <span>−10%</span>
+            </button>
+            <button class="ctrl-btn" data-action="mute">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+              <span>Mute</span>
+            </button>
+            <button class="ctrl-btn" data-action="volume" data-delta="0.1">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+              <span>+10%</span>
+            </button>
+          </div>
+
+          <div class="control-group-label">Speed</div>
+          <div class="controls-grid">
+            <button class="ctrl-btn" data-action="speed" data-delta="-1">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polygon points="11 19 2 12 11 5 11 19" />
+                <polygon points="22 19 13 12 22 5 22 19" />
+              </svg>
+              <span>Slower</span>
+            </button>
+            <button class="ctrl-btn" data-action="resetSpeed">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 .49-4.95" />
+              </svg>
+              <span>1× Reset</span>
+            </button>
+            <button class="ctrl-btn" data-action="speed" data-delta="1">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polygon points="13 19 22 12 13 5 13 19" />
+                <polygon points="2 19 11 12 2 5 2 19" />
+              </svg>
+              <span>Faster</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Keybinds -->
+      <div class="v-stack">
+        <div class="section-label-with-toggle">
+          <span class="section-label">Keybinds</span>
+          <button class="toggle-keybinds-btn" title="Configure keybinds">⚙️</button>
+        </div>
+        <div class="frosted-panel">
+          <div id="keybinds-preview" class="keybinds-preview">
+            <div class="keybind-entry">
+              <span class="keybind-action">Skip Forward</span>
+              <span class="keybind-keys">→</span>
+            </div>
+            <div class="keybind-entry">
+              <span class="keybind-action">Skip Backward</span>
+              <span class="keybind-keys">←</span>
+            </div>
+            <div class="keybind-entry">
+              <span class="keybind-action">Play/Pause</span>
+              <span class="keybind-keys">Space</span>
+            </div>
+            <div class="keybind-entry">
+              <span class="keybind-action">Mute</span>
+              <span class="keybind-keys">M</span>
+            </div>
+          </div>
+          <div id="keybinds-editor" class="keybinds-editor" style="display: none;"></div>
+          <button id="close-keybinds-btn" class="keybinds-close-btn" style="display: none;">Done</button>
+        </div>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

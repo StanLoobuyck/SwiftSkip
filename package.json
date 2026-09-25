@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build": "echo 'No build required'"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  },
+  "dependencies": {
+    "mux.js": "^6.3.0"
+  }
+}

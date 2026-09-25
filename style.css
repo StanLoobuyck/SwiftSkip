@@ -1,0 +1,279 @@
+#swiftskip-osd {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: rgba(28, 28, 30, 0.6);
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+    sans-serif;
+  font-weight: 600;
+  z-index: 2147483647 !important;
+  pointer-events: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.25),
+    0 4px 10px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  will-change: opacity, transform;
+  isolation: isolate;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+#swiftskip-download-wrap {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 2147483647 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 222px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+    sans-serif;
+}
+
+.swiftskip-download-actions {
+  display: grid;
+  grid-template-columns: 1fr 34px;
+  gap: 8px;
+  align-items: center;
+}
+
+#swiftskip-download-btn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(16, 16, 18, 0.76);
+  color: #ffffff;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  min-height: 36px;
+  padding: 10px 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+#swiftskip-download-dismiss {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(16, 16, 18, 0.68);
+  color: rgba(255, 255, 255, 0.86);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 0 0 2px;
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+#swiftskip-download-dismiss:hover {
+  background: rgba(64, 38, 38, 0.84);
+  border-color: rgba(255, 190, 190, 0.28);
+  color: #ffffff;
+  transform: scale(1.04);
+}
+
+#swiftskip-download-dismiss:active {
+  transform: scale(0.96);
+}
+
+#swiftskip-download-btn:hover {
+  background: rgba(34, 34, 38, 0.86);
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+#swiftskip-download-btn:disabled {
+  cursor: wait;
+  opacity: 0.9;
+}
+
+#swiftskip-download-progress {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(34, 34, 38, 0.82), rgba(16, 16, 18, 0.78));
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 10px;
+  backdrop-filter: blur(22px) saturate(1.55);
+  -webkit-backdrop-filter: blur(22px) saturate(1.55);
+  transform-origin: top right;
+  animation: swiftskip-progress-in 0.22s ease forwards;
+}
+
+#swiftskip-download-progress[hidden] {
+  display: none;
+}
+
+.swiftskip-download-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.swiftskip-download-progress-label,
+.swiftskip-download-progress-meta {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.swiftskip-download-progress-label {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.94);
+  text-overflow: ellipsis;
+}
+
+.swiftskip-download-progress-meta {
+  color: rgba(255, 255, 255, 0.62);
+  flex-shrink: 0;
+}
+
+.swiftskip-download-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(235, 235, 245, 0.18);
+}
+
+.swiftskip-download-progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, #ffffff, rgba(180, 232, 255, 0.94));
+  box-shadow: 0 0 18px rgba(180, 232, 255, 0.36);
+  transition: width 0.22s ease-out;
+}
+
+#swiftskip-osd.swiftskip-bump {
+  animation: swiftskip-bump-in 0.26s cubic-bezier(0.3, 0.8, 0.4, 1.2) forwards;
+}
+
+#swiftskip-osd.swiftskip-fade-out {
+  animation: swiftskip-fade-out 0.35s ease forwards !important;
+}
+
+.swiftskip-osd-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.swiftskip-osd-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.swiftskip-osd-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.swiftskip-osd-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.96);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+/* Progress bar (volume / speed / seek) */
+.swiftskip-osd-bar {
+  height: 4px;
+  background: rgba(235, 235, 245, 0.3);
+  border-radius: 100px;
+  overflow: hidden;
+  display: none; /* shown via JS when barValue is set */
+  width: 76px;
+}
+
+.swiftskip-osd-bar-fill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 100px;
+  transition: width 0.1s ease-out;
+}
+
+@keyframes swiftskip-bump-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes swiftskip-fade-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}
+
+@keyframes swiftskip-progress-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
