@@ -4,7 +4,7 @@
 // browser, so the entry file (firefox.js / chrome.js / safari.js) passes in
 // `runDownload` and `cancelDownload`.
 
-import { sanitizeFilename } from "../shared/filename.js";
+import { buildLectureTitle, sanitizeFilename } from "../shared/filename.js";
 
 export const ext = globalThis.browser ?? globalThis.chrome;
 
@@ -19,7 +19,8 @@ function createState(tabId) {
     active: false,
     jobId: null,
     url: null,
-    title: null,
+    title: null, // Kaltura's name for the recording
+    context: {}, // { course, lecture } from the Toledo page around the player
     phase: "No lecture detected",
     downloaded: 0,
     total: 0,
@@ -118,11 +119,14 @@ async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
     });
   }
 
-  const resolvedTitle = sanitizeFilename(title || state.title);
+  const resolvedTitle = sanitizeFilename(
+    buildLectureTitle({ ...state.context, recording: title || state.title }),
+  );
   const resolvedJobId = jobId || createJobId();
 
   setDownloadState(tabId, {
     ...createState(tabId),
+    context: state.context,
     available: true,
     active: true,
     jobId: resolvedJobId,
@@ -178,11 +182,18 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
         state: setDownloadState(tabId, {
           available: true,
           url: msg.url,
-          title: sanitizeFilename(msg.title),
+          title: msg.title || null,
           phase: state.active ? state.phase : "Ready",
           error: state.active ? state.error : null,
         }),
       };
+    },
+
+    // From the top-level Toledo page: which course/lecture this tab shows.
+    registerLectureContext(msg, sender) {
+      const tabId = tabOf(msg, sender);
+      getState(tabId).context = { course: msg.course || null, lecture: msg.lecture || null };
+      return { ok: true };
     },
 
     getLectureDownloadState(msg, sender) {
@@ -241,15 +252,16 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
     tabStates.delete(tabId);
   });
 
-  if (__DEV__) devShowTestPage();
+  if (__DEV__) devReloadTestPages();
 }
 
-// Dev builds (npm run dev:*): once per extension load, open the local test page
-// (or reload it after a rebuild) so it always has the current content script.
-// Not tied to onInstalled: with the kept dev profile, Chrome doesn't fire it
-// on later runs. storage.session is cleared on every extension (re)load but
-// survives Chrome's service worker going idle and waking up again.
-async function devShowTestPage() {
+// Dev builds (npm run dev:*): after a rebuild, reload open test pages so they
+// get the new content script (the old one is cut off when the extension
+// reloads). Once per extension load: storage.session is cleared on every
+// (re)load but survives Chrome's service worker going idle and waking up.
+// A test page opened before SwiftSkip was ready refreshes itself (see
+// test/fixtures/index.html), so this doesn't have to catch that case.
+async function devReloadTestPages() {
   try {
     const { devTestPageShown } = await ext.storage.session.get("devTestPageShown");
     if (devTestPageShown) return;
@@ -260,9 +272,5 @@ async function devShowTestPage() {
   }
 
   const tabs = await ext.tabs.query({ url: ["http://localhost/*", "http://127.0.0.1/*"] });
-  if (tabs.length) {
-    for (const tab of tabs) ext.tabs.reload(tab.id);
-  } else {
-    ext.tabs.create({ url: __DEV_TEST_URL__ });
-  }
+  for (const tab of tabs) ext.tabs.reload(tab.id);
 }

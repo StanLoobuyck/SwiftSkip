@@ -6,8 +6,7 @@
 // 2. serves the local test page on http://localhost:8123 (or the next free
 //    port, so dev:firefox and dev:chrome can run side by side)
 // 3. opens the browser with the extension loaded; it reloads on each rebuild.
-//    The extension itself opens the test page once it's loaded (see
-//    background/core.js), so the page never exists before SwiftSkip does.
+//    If the test page loads before SwiftSkip is ready, it refreshes itself.
 //
 // The browser uses its own profile in .profiles/, kept between runs, so you
 // only have to log in to Toledo once there.
@@ -149,7 +148,6 @@ process.on("SIGTERM", shutdown);
 // Initial build first, so the browser never starts from an empty folder; the
 // watcher then only rebuilds on changes (a second build right at startup would
 // make web-ext reload the extension while the browser is still starting).
-process.env.SWIFTSKIP_TEST_URL = `http://localhost:${port}/`;
 execFileSync(process.execPath, ["scripts/build.js", target, "--dev"], { cwd: ROOT, stdio: "inherit" });
 run(process.execPath, ["scripts/build.js", target, "--dev", "--watch-only"]);
 
@@ -159,6 +157,7 @@ mkdirSync(dirname(profile), { recursive: true });
 const webExt = join(ROOT, "node_modules", ".bin", "web-ext");
 const common = [
   "run",
+  "--start-url", `http://localhost:${port}/?toolTitle=${encodeURIComponent("Les 1 (2026-09-23): testopname")}`,
   "--source-dir", join(ROOT, "dist", target),
   "--profile-create-if-missing",
   "--keep-profile-changes",

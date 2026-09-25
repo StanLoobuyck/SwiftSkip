@@ -6,13 +6,8 @@ export function computeSkip(currentTime, duration, seconds) {
   const end = Number.isFinite(duration) && duration > 0 ? duration : Infinity;
   const time = Math.min(end, Math.max(0, currentTime + seconds));
   const moved = time - currentTime;
-  return {
-    time,
-    moved,
-    // Already at the edge in the skip direction: nothing to do.
-    blocked: Math.abs(moved) < 0.05,
-    edge: time <= 0 ? "start" : time >= end ? "end" : null,
-  };
+  // Already at the edge in the skip direction: nothing to do.
+  return { time, moved, blocked: Math.abs(moved) < 0.05 };
 }
 
 // Running total shown while skips are chained (+10s, +20s, …). Starts over

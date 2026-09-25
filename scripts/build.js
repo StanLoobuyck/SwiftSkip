@@ -64,8 +64,6 @@ async function buildTarget(target) {
     define: {
       __BROWSER__: JSON.stringify(target),
       __DEV__: JSON.stringify(dev),
-      // Where dev builds open the local test page (set by dev.js).
-      __DEV_TEST_URL__: JSON.stringify(process.env.SWIFTSKIP_TEST_URL || "http://localhost:8123/"),
     },
     logLevel: "warning",
   });

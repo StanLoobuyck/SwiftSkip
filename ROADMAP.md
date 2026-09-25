@@ -22,8 +22,8 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 - [x] Output `.mp4` instead of `.ts` (remux with mux.js; falls back to `.ts` if that fails)
 - [x] Retry failed segments (3× with backoff) and fetch 4 in parallel
 - [x] Clear error message instead of saving a useless `.m3u8`
-- [ ] 🔍 Detect both streams (camera + slides) and let the user choose
-- [ ] Filename from the Toledo breadcrumb: course – lecture – date
+- [x] ~~🔍 Detect both streams (camera + slides)~~ — checked on a real lecture: Kaltura serves camera + slides as **one** composited video, so the download already contains both
+- [x] Filename from the Toledo page: `<course> - <lecture title (date)>.mp4`
 - [x] Per-tab download state; several downloads at once; speed + time remaining
 
 ## Phase 2 — Playback controls
@@ -45,7 +45,7 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 - [x] New Firefox add-on ID that doesn't suggest an official KU Leuven product (`swiftskip@stanloobuyck.github.io`; fixed once signed)
 - [x] "Not affiliated with KU Leuven" disclaimer in the READMEs
 - [ ] Check KU Leuven's rules on lecture recordings; add a "personal study use only" note
-- [ ] Filenames: tabs/newlines in titles become spaces, not `_`
+- [x] Filenames: tabs/newlines in titles become spaces, not `_`
 
 ## Phase 4 — UX & languages
 

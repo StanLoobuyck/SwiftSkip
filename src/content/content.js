@@ -5,6 +5,7 @@ import { DEFAULT_KEYBINDS, DEFAULT_SKIP, SUPPORTS_DOWNLOAD } from "../shared/set
 import { isLectureManifestUrl } from "../shared/hls.js";
 import { formatProgressMeta } from "../shared/format.js";
 import { accumulateSkip, computeSkip, formatSkipTotal } from "../shared/playback.js";
+import { parseCourseTitle } from "../shared/filename.js";
 
 (function () {
   // ─── domain check ──────────────────────────────────────────────────────────
@@ -59,6 +60,8 @@ import { accumulateSkip, computeSkip, formatSkipTotal } from "../shared/playback
 
   if (window.__swiftSkipLoaded) return;
   window.__swiftSkipLoaded = true;
+  // Lets the local test page see that the dev build is active.
+  if (__DEV__) document.documentElement.dataset.swiftskipDev = "loaded";
 
   // ─── Config ────────────────────────────────────────────────────────────────
   const config = { skipSeconds: DEFAULT_SKIP, enabled: true };
@@ -640,25 +643,14 @@ import { accumulateSkip, computeSkip, formatSkipTotal } from "../shared/playback
   function skip(seconds) {
     const v = getVideo();
     if (!v) return;
-    const { time, moved, blocked, edge } = computeSkip(v.currentTime, v.duration, seconds);
-    const position = Number.isFinite(v.duration) && v.duration > 0 ? time / v.duration : null;
-
-    if (blocked) {
-      // Already at the start/end: say so instead of counting up −10, −20, …
-      skipAccumulator = 0;
-      showOSD(
-        "skip-edge",
-        seconds < 0 ? "backward" : "forward",
-        seconds < 0 ? "Start of video" : "End of video",
-        position,
-      );
-      return;
+    const { time, moved, blocked } = computeSkip(v.currentTime, v.duration, seconds);
+    // At the start/end the total simply stays put (e.g. "−4s"), no −10 −20 …
+    if (!blocked) {
+      v.currentTime = time;
+      skipAccumulator = accumulateSkip(skipAccumulator, moved);
     }
-
-    v.currentTime = time;
-    skipAccumulator = accumulateSkip(skipAccumulator, moved);
-    const edgeNote = edge === "start" ? " \u00b7 Start" : edge === "end" ? " \u00b7 End" : "";
-    showOSD("skip", null, `${formatSkipTotal(skipAccumulator)}${edgeNote}`, position);
+    const position = Number.isFinite(v.duration) && v.duration > 0 ? time / v.duration : null;
+    showOSD("skip", null, formatSkipTotal(skipAccumulator), position);
   }
 
   function changeVolume(delta) {
@@ -915,6 +907,45 @@ import { accumulateSkip, computeSkip, formatSkipTotal } from "../shared/playback
   );
 
   startHlsDetection();
+
+  // ─── Lecture context (top-level Toledo page only) ──────────────────────────
+  // The player lives in a cross-origin Kaltura iframe that only knows the
+  // recording's room/time name. The Toledo page around it knows the course
+  // (breadcrumb) and the lecture title (the LTI launch URL's toolTitle), which
+  // make a much better download filename.
+  function readLectureContext() {
+    const lecture = new URLSearchParams(window.location.search).get("toolTitle");
+    let course = null;
+    for (const link of document.querySelectorAll("nav a")) {
+      const parsed = parseCourseTitle(link.textContent);
+      if (parsed) {
+        course = parsed.name;
+        break;
+      }
+    }
+    return { course, lecture: lecture && lecture.trim() };
+  }
+
+  if (window === window.top) {
+    let lastContext = null;
+    const sendLectureContext = () => {
+      const context = readLectureContext();
+      const key = JSON.stringify(context);
+      if (key === lastContext) return;
+      lastContext = key;
+      // Callback form: works the same in every browser and swallows "no receiver".
+      chrome.runtime.sendMessage({ action: "registerLectureContext", ...context }, () => {
+        void chrome.runtime.lastError;
+      });
+    };
+    sendLectureContext();
+    // Toledo renders the breadcrumb (and changes lecture) without page loads.
+    const contextTimer = setInterval(() => {
+      // After an extension update this old copy is cut off; stop quietly.
+      if (!chrome.runtime?.id) return clearInterval(contextTimer);
+      sendLectureContext();
+    }, 2000);
+  }
 
   // ─── Messages from popup ───────────────────────────────────────────────────
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

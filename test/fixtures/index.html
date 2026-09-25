@@ -10,9 +10,15 @@
       main { max-width: 960px; margin: 16px auto 0; }
       code, kbd { background: #222; padding: 1px 6px; border-radius: 4px; }
       #hls-status { color: #8c8; }
+      .crumbs { max-width: 960px; margin: 0 auto 12px; color: #999; }
+      .crumbs a { color: #9cf; }
+      #swiftskip-status { position: fixed; top: 0; left: 0; right: 0; margin: 0; padding: 10px 24px; background: #7a1f1f; color: #fff; }
     </style>
   </head>
   <body>
+    <!-- Mimics Toledo's breadcrumb; with ?toolTitle=… in the URL (like Toledo's
+         LTI launch page) the download is named "<course> - <lecture>". -->
+    <nav class="crumbs"><a href="#">SwiftSkip Testvak [T01E5T] • ULTRA-TEST</a> › <a href="#">Lesopnames</a></nav>
     <!-- Class name contains "player" like Kaltura's, so SwiftSkip's player detection is exercised. -->
     <div class="kaltura-player player">
       <video src="media/lecture.mp4" controls playsinline></video>
@@ -31,7 +37,27 @@
       </p>
       <p><input placeholder="Typing here must NOT trigger shortcuts" size="40" /></p>
     </main>
+    <p id="swiftskip-status" hidden></p>
     <script>
+      // The browser may open this page before SwiftSkip (dev) has finished
+      // loading; content scripts only attach on page load, so retry a few times.
+      setTimeout(() => {
+        if (document.documentElement.dataset.swiftskipDev) {
+          sessionStorage.removeItem("swiftskipRetries");
+          return;
+        }
+        const tries = Number(sessionStorage.getItem("swiftskipRetries") || 0);
+        if (tries < 5) {
+          sessionStorage.setItem("swiftskipRetries", tries + 1);
+          location.reload();
+        } else {
+          const status = document.getElementById("swiftskip-status");
+          status.textContent = "SwiftSkip (dev) is not active on this page. Is npm run dev:* running? Check the extension's errors.";
+          status.hidden = false;
+          sessionStorage.removeItem("swiftskipRetries");
+        }
+      }, 1500);
+
       fetch("media/hls/index.m3u8")
         .then((r) => (document.getElementById("hls-status").textContent = r.ok ? "playlist requested ✔" : `HTTP ${r.status}`))
         .catch((e) => (document.getElementById("hls-status").textContent = e.message));

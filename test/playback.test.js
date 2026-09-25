@@ -3,28 +3,27 @@ import { test } from "node:test";
 import { accumulateSkip, computeSkip, formatSkipTotal } from "../src/shared/playback.js";
 
 test("a normal skip moves the full amount", () => {
-  assert.deepEqual(computeSkip(60, 600, -10), { time: 50, moved: -10, blocked: false, edge: null });
-  assert.deepEqual(computeSkip(60, 600, 10), { time: 70, moved: 10, blocked: false, edge: null });
+  assert.deepEqual(computeSkip(60, 600, -10), { time: 50, moved: -10, blocked: false });
+  assert.deepEqual(computeSkip(60, 600, 10), { time: 70, moved: 10, blocked: false });
 });
 
 test("skipping back near the start stops at 0 and reports the real distance", () => {
-  assert.deepEqual(computeSkip(4, 600, -10), { time: 0, moved: -4, blocked: false, edge: "start" });
+  assert.deepEqual(computeSkip(4, 600, -10), { time: 0, moved: -4, blocked: false });
 });
 
 test("skipping back at the very start is blocked", () => {
   assert.equal(computeSkip(0, 600, -10).blocked, true);
   assert.equal(computeSkip(0.01, 600, -10).blocked, true);
-  assert.equal(computeSkip(0, 600, -10).edge, "start");
 });
 
 test("skipping forward at the end is blocked; near the end it stops at the end", () => {
   assert.equal(computeSkip(600, 600, 10).blocked, true);
-  assert.deepEqual(computeSkip(595, 600, 10), { time: 600, moved: 5, blocked: false, edge: "end" });
+  assert.deepEqual(computeSkip(595, 600, 10), { time: 600, moved: 5, blocked: false });
 });
 
 test("unknown duration (still loading / live) doesn't clamp forward skips", () => {
-  assert.deepEqual(computeSkip(30, NaN, 10), { time: 40, moved: 10, blocked: false, edge: null });
-  assert.deepEqual(computeSkip(30, Infinity, 10), { time: 40, moved: 10, blocked: false, edge: null });
+  assert.deepEqual(computeSkip(30, NaN, 10), { time: 40, moved: 10, blocked: false });
+  assert.deepEqual(computeSkip(30, Infinity, 10), { time: 40, moved: 10, blocked: false });
 });
 
 test("chained skips add up, and start over when the direction changes", () => {
