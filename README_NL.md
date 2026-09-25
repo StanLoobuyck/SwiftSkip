@@ -2,7 +2,7 @@
 
 ## Overzicht
 
-SwiftSkip is een krachtige Chrome/Edge/Firefox-extensie die volledige toetsenbordbesturing biedt voor video's op Toledo/Ultra platforms van KU Leuven.
+SwiftSkip is een krachtige Chrome/Edge/Firefox-extensie die volledige toetsenbordbesturing biedt voor video's op de Toledo/Ultra platforms die KU Leuven gebruikt.
 
 **Functies:**
 - Video overslaan (vooruit/achteruit)
@@ -159,7 +159,7 @@ Dit is normaal gedrag voor tijdelijk geladen add-ons in Firefox. U kunt:
 
 ## Licentie
 
-SwiftSkip is vrij beschikbaar voor gebruik op KU Leuven platforms.
+SwiftSkip is open source onder de [MIT-licentie](LICENSE). Het is een onafhankelijk studentenproject, niet verbonden aan, goedgekeurd door of ondersteund door KU Leuven.
 
 ---
 

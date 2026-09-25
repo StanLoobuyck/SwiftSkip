@@ -42,7 +42,8 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 - [ ] 🔍 Replace `<all_urls>` with KU Leuven + Kaltura domains only
 - [ ] Remove `innerHTML` usage (3 lint warnings)
 - [ ] Privacy policy (no data is collected or sent)
-- [ ] New Firefox add-on ID that doesn't suggest an official KU Leuven product (before first store release — can't change after)
+- [x] New Firefox add-on ID that doesn't suggest an official KU Leuven product (`swiftskip@stanloobuyck.github.io`; fixed once signed)
+- [x] "Not affiliated with KU Leuven" disclaimer in the READMEs
 - [ ] Check KU Leuven's rules on lecture recordings; add a "personal study use only" note
 - [ ] Filenames: tabs/newlines in titles become spaces, not `_`
 
@@ -64,6 +65,7 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 
 ## Phase 6 — Publishing
 
+- [x] `npm run sign`: Mozilla-signed unlisted .xpi for permanent install in your own Firefox/Zen
 - [ ] Firefox Add-ons (free) — also covers Zen, LibreWolf
 - [ ] Chrome Web Store ($5 once) — also Brave, Opera, Vivaldi, Arc
 - [ ] Edge Add-ons (free, same zip as Chrome)

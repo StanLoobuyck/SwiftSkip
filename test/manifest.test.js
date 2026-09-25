@@ -8,7 +8,7 @@ test("firefox manifest is MV2 with a persistent background and a gecko id", () =
   const m = buildManifest("firefox", opts);
   assert.equal(m.manifest_version, 2);
   assert.equal(m.background.persistent, true);
-  assert.equal(m.browser_specific_settings.gecko.id, "swiftskip@kuleuven");
+  assert.equal(m.browser_specific_settings.gecko.id, "swiftskip@stanloobuyck.github.io");
   assert.ok(m.browser_action);
 });
 

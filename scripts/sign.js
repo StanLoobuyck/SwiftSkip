@@ -1,0 +1,64 @@
+// Signs the Firefox build with addons.mozilla.org as an *unlisted* add-on:
+// not public on the store, but gives a signed .xpi that installs permanently
+// in Firefox/Zen (web-ext-artifacts/*.xpi).
+//
+//   npm run sign
+//
+// Needs AMO API credentials (addons.mozilla.org → Tools → Manage API Keys) in
+// a .env file in the project root (never committed):
+//
+//   WEB_EXT_API_KEY=user:12345:67
+//   WEB_EXT_API_SECRET=...
+//
+// Mozilla requires the readable source for bundled code, so the committed
+// source (git archive of HEAD) is uploaded along with it. Commit first.
+
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const envFile = join(ROOT, ".env");
+if (existsSync(envFile)) process.loadEnvFile(envFile);
+
+const { WEB_EXT_API_KEY: apiKey, WEB_EXT_API_SECRET: apiSecret } = process.env;
+if (!apiKey || !apiSecret) {
+  console.error(
+    "Missing AMO API credentials.\n" +
+      "Create them at https://addons.mozilla.org/developers/addon/api/key/ and put them in .env:\n\n" +
+      "  WEB_EXT_API_KEY=user:...\n  WEB_EXT_API_SECRET=...\n",
+  );
+  process.exit(1);
+}
+
+const git = (...args) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
+if (git("status", "--porcelain")) {
+  console.error("Commit your changes first: the uploaded source must match what gets signed.");
+  process.exit(1);
+}
+
+const { version } = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+const artifactsDir = join(ROOT, "web-ext-artifacts");
+mkdirSync(artifactsDir, { recursive: true });
+
+execFileSync(process.execPath, ["scripts/build.js", "firefox"], { cwd: ROOT, stdio: "inherit" });
+const sourceZip = join(artifactsDir, `swiftskip-source-${version}.zip`);
+git("archive", "--format=zip", "-o", sourceZip, "HEAD");
+
+const webExt = (await import("web-ext")).default;
+const result = await webExt.cmd.sign({
+  sourceDir: join(ROOT, "dist", "firefox"),
+  artifactsDir,
+  apiKey,
+  apiSecret,
+  channel: "unlisted",
+  uploadSourceCode: sourceZip,
+});
+
+if (!result.success) {
+  console.error("Signing failed.");
+  process.exit(1);
+}
+console.log(`\n✔ Signed: ${result.downloadedFiles.map((f) => join(artifactsDir, f)).join(", ")}`);
+console.log("Install it by dragging the .xpi into Firefox/Zen (or about:addons → ⚙ → Install Add-on From File).");

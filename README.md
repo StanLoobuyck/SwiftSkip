@@ -2,7 +2,7 @@
 
 SwiftSkip is a specialized browser extension designed to streamline the academic viewing experience. While its primary strength lies in bridging the gap between the browser sandbox and the local OS for media extraction, it also functions as a powerful video controller.
 
-Built for KU Leuven's Toledo/Ultra lecture recordings (Kaltura):
+Works with the Toledo/Ultra lecture recordings (Kaltura) used at KU Leuven:
 
 - Full keyboard control: skip, volume, speed, mute, fullscreen, seek to 0–90%
 - Customizable keybinds
@@ -22,3 +22,5 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for building and testing, and [ROADMAP.md](
 ## License
 
 [MIT](LICENSE)
+
+SwiftSkip is an independent student project. It is not affiliated with, endorsed by or supported by KU Leuven.

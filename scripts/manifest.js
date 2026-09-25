@@ -41,7 +41,7 @@ export function buildManifest(target, { version, dev }) {
         ...base,
         browser_specific_settings: {
           gecko: {
-            id: "swiftskip@kuleuven",
+            id: "swiftskip@stanloobuyck.github.io",
             strict_min_version: "109.0",
             // SwiftSkip sends no data anywhere (required by addons.mozilla.org).
             data_collection_permissions: { required: ["none"] },

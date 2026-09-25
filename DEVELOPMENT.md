@@ -82,6 +82,18 @@ Advanced → Show features for web developers*, then *Develop → Allow Unsigned
 Extensions*, and enable SwiftSkip under *Settings → Extensions*.
 Publishing in the App Store requires an Apple Developer account (€99/year).
 
+## Using SwiftSkip in your own browser
+
+Don't load anything from `dist/` into your everyday browser: that folder is
+wiped and rebuilt by every `npm run dev:*` / build, which breaks an add-on
+loaded from it.
+
+- **Firefox / Zen (permanent):** `npm run sign` → drag the `.xpi` from
+  `web-ext-artifacts/` into the browser. Needs AMO API keys in `.env`
+  (see `scripts/sign.js`). Signed as *unlisted*: private, not on the store.
+- **Chrome:** `npm run build`, unzip `web-ext-artifacts/swiftskip-chrome-*.zip`
+  somewhere outside this project, and *Load unpacked* that folder.
+
 ## Releasing
 
 1. Bump `"version"` in `package.json` (it goes into every manifest).
