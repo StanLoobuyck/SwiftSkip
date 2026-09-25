@@ -1,7 +1,13 @@
 {
   "addons": {
     "swiftskip@stanloobuyck.github.io": {
-      "updates": []
+      "updates": [
+        {
+          "version": "4.0.0",
+          "update_link": "https://github.com/StanLoobuyck/SwiftSkip/releases/download/v4.0.0/swiftskip-firefox.xpi",
+          "update_hash": "sha256:3bd4e38839b608bcdf32adc05fbb72a8ee347fd5512273714c668c2b57f90cf4"
+        }
+      ]
     }
   }
 }
