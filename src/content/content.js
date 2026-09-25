@@ -4,6 +4,7 @@
 import { DEFAULT_KEYBINDS, DEFAULT_SKIP, SUPPORTS_DOWNLOAD } from "../shared/settings.js";
 import { isLectureManifestUrl } from "../shared/hls.js";
 import { formatProgressMeta } from "../shared/format.js";
+import { accumulateSkip, computeSkip, formatSkipTotal } from "../shared/playback.js";
 
 (function () {
   // ─── domain check ──────────────────────────────────────────────────────────
@@ -639,13 +640,25 @@ import { formatProgressMeta } from "../shared/format.js";
   function skip(seconds) {
     const v = getVideo();
     if (!v) return;
-    v.currentTime = Math.max(
-      0,
-      Math.min(v.duration || Infinity, v.currentTime + seconds),
-    );
-    skipAccumulator += seconds;
-    const sign = skipAccumulator >= 0 ? "+" : "";
-    showOSD("skip", null, `${sign}${skipAccumulator}s`);
+    const { time, moved, blocked, edge } = computeSkip(v.currentTime, v.duration, seconds);
+    const position = Number.isFinite(v.duration) && v.duration > 0 ? time / v.duration : null;
+
+    if (blocked) {
+      // Already at the start/end: say so instead of counting up −10, −20, …
+      skipAccumulator = 0;
+      showOSD(
+        "skip-edge",
+        seconds < 0 ? "backward" : "forward",
+        seconds < 0 ? "Start of video" : "End of video",
+        position,
+      );
+      return;
+    }
+
+    v.currentTime = time;
+    skipAccumulator = accumulateSkip(skipAccumulator, moved);
+    const edgeNote = edge === "start" ? " \u00b7 Start" : edge === "end" ? " \u00b7 End" : "";
+    showOSD("skip", null, `${formatSkipTotal(skipAccumulator)}${edgeNote}`, position);
   }
 
   function changeVolume(delta) {
