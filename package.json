@@ -10,7 +10,7 @@
     "build:safari": "node scripts/build.js safari",
     "dev:firefox": "node scripts/dev.js firefox",
     "dev:chrome": "node scripts/dev.js chrome",
-    "test": "node --test test/",
+    "test": "node --test \"test/*.test.js\"",
     "lint": "node scripts/build.js firefox && web-ext lint --source-dir dist/firefox",
     "fixtures": "node scripts/fixtures.js"
   },
