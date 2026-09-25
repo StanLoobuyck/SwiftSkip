@@ -37,58 +37,37 @@ import {
 } from "./overlays.js";
 
 (function () {
-  // ─── domain check ──────────────────────────────────────────────────────────
-  function isKULEnvironment() {
-    // Dev builds also run on the local test page (npm run dev:*).
-    if (__DEV__ && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
-      return true;
-    }
+  // Where this runs is decided by the browser (manifest matches + sites the
+  // user enabled), so there's no domain check here.
 
-    const isLocal =
-      window.location.hostname.includes("kuleuven.cloud") ||
-      window.location.hostname.includes("kuleuven.be");
-    if (isLocal) return true;
-
-    try {
-      if (
-        window.top &&
-        (window.top.location.hostname.includes("kuleuven.cloud") ||
-          window.top.location.hostname.includes("kuleuven.be"))
-      ) {
-        return true;
-      }
-    } catch (e) {
-      /* ignore cross-origin error */
-    }
-
-    if (window.location.ancestorOrigins) {
-      for (let i = 0; i < window.location.ancestorOrigins.length; i++) {
-        if (
-          window.location.ancestorOrigins[i].includes("kuleuven.cloud") ||
-          window.location.ancestorOrigins[i].includes("kuleuven.be")
-        ) {
-          return true;
-        }
-      }
-    }
-
-    if (
-      document.referrer &&
-      (document.referrer.includes("kuleuven.cloud") ||
-        document.referrer.includes("kuleuven.be"))
-    ) {
-      return true;
-    }
-
-    return false;
+  // ─── One copy per frame ────────────────────────────────────────────────────
+  // After an update (or enabling a site) a fresh copy is injected into open
+  // tabs. The old copy may still be around: cut off from the extension in
+  // Chrome, or already gone but with its elements left in the page (Firefox).
+  // The newest copy takes over; the old one retires and removes its UI.
+  if (window.__swiftSkip && window.__swiftSkip.alive()) return;
+  window.__swiftSkip?.retire();
+  for (const stale of document.querySelectorAll(
+    "#swiftskip-download-wrap, #swiftskip-osd, .swiftskip-sheet, .swiftskip-toast",
+  )) {
+    stale.remove();
   }
 
-  if (!isKULEnvironment()) {
-    return;
+  let retired = false;
+  const isConnected = () => Boolean(chrome.runtime?.id);
+  // True once this copy should do nothing anymore.
+  function isRetired() {
+    if (!retired && !isConnected()) retire();
+    return retired;
   }
+  function retire() {
+    if (retired) return;
+    retired = true;
+    for (const el of [downloadWrapEl, osdEl]) el?.remove();
+    closeShortcutSheet();
+  }
+  window.__swiftSkip = { alive: () => !retired && isConnected(), retire };
 
-  if (window.__swiftSkipLoaded) return;
-  window.__swiftSkipLoaded = true;
   // Lets the local test page see that the dev build is active.
   if (__DEV__) document.documentElement.dataset.swiftskipDev = "loaded";
 
@@ -916,7 +895,7 @@ import {
   window.addEventListener(
     "keydown",
     (e) => {
-      if (!settings.enabled) return;
+      if (isRetired() || !settings.enabled) return;
       if (isTypingTarget(e.composedPath?.()[0] || e.target)) return;
 
       const stop = () => {
@@ -987,7 +966,7 @@ import {
 
   window.addEventListener("message", (event) => {
     const data = event.data;
-    if (!data || typeof data !== "object" || !data[RELAY]) return;
+    if (!data || typeof data !== "object" || !data[RELAY] || isRetired()) return;
     if (data[RELAY] === "player" && event.source !== window) {
       playerWindow = event.source;
     } else if (data[RELAY] === "hello" && isAncestor(event.source)) {
@@ -1087,7 +1066,7 @@ import {
   trackVideos();
   const videoTimer = setInterval(() => {
     // After an extension update this old copy is cut off; stop quietly.
-    if (!chrome.runtime?.id) return clearInterval(videoTimer);
+    if (isRetired()) return clearInterval(videoTimer);
     trackVideos();
   }, 2000);
 
@@ -1127,7 +1106,7 @@ import {
     // Toledo renders the breadcrumb (and changes lecture) without page loads.
     const contextTimer = setInterval(() => {
       // After an extension update this old copy is cut off; stop quietly.
-      if (!chrome.runtime?.id) return clearInterval(contextTimer);
+      if (isRetired()) return clearInterval(contextTimer);
       sendLectureContext();
     }, 2000);
   }
@@ -1139,7 +1118,7 @@ import {
   }
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (!msg || !msg.action) return false;
+    if (!msg || !msg.action || retired) return false;
     if (msg.action === "lectureDownloadProgress") {
       setDownloadProgress(msg);
       return false;

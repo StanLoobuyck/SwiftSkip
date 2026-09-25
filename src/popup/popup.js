@@ -6,11 +6,14 @@ import { SUPPORTS_DOWNLOAD } from "../shared/features.js";
 import { formatProgressMeta } from "../shared/format.js";
 import { formatSpeed } from "../shared/playback.js";
 import { SKIP_OPTIONS } from "../shared/settings.js";
+import { isBuiltInSite, originPattern, patternHost } from "../shared/sites.js";
 import { loadSettings, saveSettings } from "../shared/storage.js";
 
 const $ = (id) => document.getElementById(id);
 
 let tabId = null;
+let tabUrl = "";
+let siteActive = true; // SwiftSkip runs on this tab's site
 let settings = null;
 let download = null; // this tab's download state from the background
 
@@ -53,7 +56,16 @@ function renderLecture() {
 
   $("lecture-course").textContent = context.course || "";
   $("lecture-course").hidden = !(available && context.course);
-  $("lecture-title").textContent = available ? title || "Lecture recording" : "No lecture on this page";
+  const pattern = originPattern(tabUrl);
+  $("site-off").hidden = siteActive || !pattern;
+  if (!siteActive && pattern) {
+    $("site-host").textContent = patternHost(pattern);
+    $("lecture-title").textContent = "SwiftSkip is off on this site";
+    $("lecture-hint").textContent = "Turn it on to use the shortcuts and downloads here.";
+  } else {
+    $("lecture-title").textContent = available ? title || "Lecture recording" : "No lecture on this page";
+    $("lecture-hint").textContent = "Open a recording in Toledo to download it or control it with the keyboard.";
+  }
   $("lecture-hint").hidden = available;
 
   const phase = state.phase;
@@ -104,6 +116,25 @@ ext.runtime.onMessage.addListener((msg) => {
     download = msg.state;
     renderLecture();
   }
+});
+
+// ─── Other sites ──────────────────────────────────────────────────────────────
+
+async function checkSiteActive() {
+  const pattern = originPattern(tabUrl);
+  if (!pattern || isBuiltInSite(tabUrl)) return true;
+  return ext.permissions.contains({ origins: [pattern] }).catch(() => false);
+}
+
+$("site-enable").addEventListener("click", async () => {
+  const pattern = originPattern(tabUrl);
+  // The background registers + injects SwiftSkip when the permission is added
+  // (Firefox closes this popup while its permission prompt is open).
+  const granted = await ext.permissions.request({ origins: [pattern] }).catch(() => false);
+  if (!granted) return;
+  siteActive = true;
+  renderLecture();
+  setTimeout(async () => renderSpeed(await askPlayer({ action: "getPlayback" })), 800);
 });
 
 // ─── Speed ────────────────────────────────────────────────────────────────────
@@ -158,11 +189,15 @@ $("open-shortcuts").addEventListener("click", () => openSettings("#shortcuts"));
 (async () => {
   const [tab] = await ext.tabs.query({ active: true, currentWindow: true });
   tabId = tab ? tab.id : null;
-  // Dev builds: popup.html?tab=<id> shows another tab, for automated UI tests.
-  if (__DEV__ && new URLSearchParams(location.search).has("tab")) {
-    tabId = Number(new URLSearchParams(location.search).get("tab"));
+  tabUrl = (tab && tab.url) || "";
+  // Dev builds: popup.html?tab=<id>&url=<url> shows another tab, for automated UI tests.
+  const devParams = new URLSearchParams(location.search);
+  if (__DEV__ && devParams.has("tab")) {
+    tabId = Number(devParams.get("tab"));
+    tabUrl = devParams.get("url") || "";
   }
   settings = await loadSettings();
+  siteActive = await checkSiteActive();
   renderEnabled();
   renderSkip();
   renderSpeed(null);

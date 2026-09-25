@@ -10,6 +10,10 @@ Works with the Toledo/Ultra lecture recordings (Kaltura) used at KU Leuven:
 
 Works in **Firefox** (and Zen, LibreWolf) and **Chrome** (and Edge, Brave, Opera, Vivaldi, Arc). Safari support is planned.
 
+SwiftSkip only runs on Toledo (KU Leuven) and on Kaltura video players. Using Kaltura at another school, or want it on another site? Open that site and choose **Enable** in the SwiftSkip popup — it only gets access to that one site. SwiftSkip collects no data: see the [privacy policy](PRIVACY.md).
+
+Downloaded recordings are for your personal study only — please don't share them.
+
 ## Install
 
 Download the zip for your browser from the [latest release](https://github.com/StanLoobuyck/SwiftSkip/releases/latest), then follow the installation guide:

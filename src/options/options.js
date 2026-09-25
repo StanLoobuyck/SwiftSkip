@@ -12,6 +12,8 @@ import {
   formatBinding,
 } from "../shared/shortcuts.js";
 import { formatSpeed } from "../shared/playback.js";
+import { patternHost } from "../shared/sites.js";
+import { enabledSites } from "../background/sites.js";
 import {
   clearResumePositions,
   countResumePositions,
@@ -230,12 +232,36 @@ $("reset-shortcuts").addEventListener("click", () => {
   renderShortcuts();
 });
 
+// ─── Sites ────────────────────────────────────────────────────────────────────
+
+async function renderSites() {
+  const list = $("site-list");
+  const builtIn = el("li");
+  builtIn.append(el("span", null, "Toledo (KU Leuven) and Kaltura players"), el("span", "builtin", "Always on"));
+  const rows = [builtIn];
+  for (const pattern of await enabledSites()) {
+    const row = el("li");
+    const remove = el("button", "btn btn-secondary btn-small", "Remove");
+    remove.type = "button";
+    remove.setAttribute("aria-label", `Remove ${patternHost(pattern)}`);
+    // Takes effect for new page loads; the background unregisters the script.
+    remove.addEventListener("click", () => ext.permissions.remove({ origins: [pattern] }));
+    row.append(el("span", null, patternHost(pattern)), remove);
+    rows.push(row);
+  }
+  list.replaceChildren(...rows);
+}
+
+ext.permissions.onAdded.addListener(renderSites);
+ext.permissions.onRemoved.addListener(renderSites);
+
 // ─── Start ────────────────────────────────────────────────────────────────────
 
 function render() {
   renderGeneral();
   renderShortcuts();
   renderForgetPositions();
+  renderSites();
 }
 
 $("version").textContent = ext.runtime.getManifest().version;

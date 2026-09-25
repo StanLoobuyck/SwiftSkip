@@ -206,6 +206,27 @@ details.jump summary:hover {
   color: var(--text);
 }
 
+/* ─── Sites ─────────────────────────────────────────────────────────────── */
+
+.site-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  border-top: 1px solid var(--border);
+}
+
+.site-list .builtin {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* ─── About ─────────────────────────────────────────────────────────────── */
 
 .about .subtle {

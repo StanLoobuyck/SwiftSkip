@@ -30,3 +30,18 @@ test("dev builds are labelled so they're distinguishable from the release", () =
   assert.equal(buildManifest("chrome", { ...opts, dev: true }).name, "SwiftSkip (dev)");
   assert.equal(buildManifest("chrome", opts).version, "1.2.3");
 });
+
+test("no build asks for all websites up front; other sites are optional", () => {
+  for (const target of ["firefox", "chrome", "safari"]) {
+    const m = buildManifest(target, opts);
+    const upfront = [...m.permissions, ...(m.host_permissions || [])];
+    assert.ok(!upfront.includes("<all_urls>") && !upfront.includes("*://*/*"), target);
+    assert.deepEqual(m.content_scripts[0].matches, ["*://*.kuleuven.be/*", "*://*.kuleuven.cloud/*", "*://*.kaltura.com/*"]);
+    assert.deepEqual(m.optional_permissions || m.optional_host_permissions, ["*://*/*"]);
+  }
+});
+
+test("only dev builds run on localhost", () => {
+  assert.ok(buildManifest("chrome", { ...opts, dev: true }).content_scripts[0].matches.includes("http://localhost/*"));
+  assert.ok(!buildManifest("chrome", opts).content_scripts[0].matches.includes("http://localhost/*"));
+});

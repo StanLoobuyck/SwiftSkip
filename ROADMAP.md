@@ -43,12 +43,14 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 
 ## Phase 3 — Security, privacy, permissions
 
-- [ ] 🔍 Replace `<all_urls>` with KU Leuven + Kaltura domains only
+- [x] Downloads also work from Kaltura CDNs SwiftSkip has no access to (retry without cookies)
+- [x] Replace `<all_urls>` with KU Leuven + Kaltura domains; other sites opt-in per site from the popup (optional permission)
 - [x] Remove `innerHTML` usage (3 lint warnings)
-- [ ] Privacy policy (no data is collected or sent)
+- [x] Privacy policy (PRIVACY.md, linked from the settings page)
 - [x] New Firefox add-on ID that doesn't suggest an official KU Leuven product (`swiftskip@stanloobuyck.github.io`; fixed once signed)
 - [x] "Not affiliated with KU Leuven" disclaimer in the READMEs
-- [ ] Check KU Leuven's rules on lecture recordings; add a "personal study use only" note
+- [x] "Personal study use only" note (README, settings page, privacy policy)
+- [ ] Stan: check KU Leuven's rules on lecture recordings before publishing
 - [x] Filenames: tabs/newlines in titles become spaces, not `_`
 
 ## Phase 4 — UX & languages
@@ -57,7 +59,7 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 - [x] Options page for settings/keybinds (instead of the cramped popup)
 - [ ] Welcome page on first install
 - [x] Popup shows what was detected for the current tab
-- [ ] After an update, open Toledo tabs need a refresh in Chrome — inject into open tabs on update (needs `scripting` permission)
+- [x] After an install/update, SwiftSkip starts in already-open tabs (no refresh needed)
 - [x] Light/dark follows the system
 - [ ] Full keyboard + screen-reader pass over popup and settings page
 

@@ -73,6 +73,28 @@ body {
   margin-top: 12px;
 }
 
+.site-off {
+  margin-top: 12px;
+}
+
+.site-enable {
+  width: 100%;
+  gap: 0.3em; /* the space between "Enable on" and the site */
+}
+
+.site-enable span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-note {
+  margin-top: 6px !important;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
 .download:empty,
 .download:not(:has(> :not([hidden]))) {
   display: none;

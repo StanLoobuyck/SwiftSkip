@@ -17,6 +17,7 @@ let server;
 let base;
 let slowSegments = false;
 let flakyFailuresLeft = 0;
+let dropConnectionsLeft = 0;
 let realTsDir = null;
 const requests = [];
 
@@ -62,6 +63,12 @@ before(async () => {
       // Later segments answer faster, so they finish out of order.
       const delay = slowSegments ? 200 : (SEGMENTS.length - Number(seg[1])) * 5;
       setTimeout(() => res.end(SEGMENTS[seg[1]]), delay);
+    } else if (req.url === "/drop.m3u8") {
+      res.end("#EXTM3U\n#EXTINF:6,\ndrop.ts\n#EXT-X-ENDLIST\n");
+    } else if (req.url === "/drop.ts") {
+      // A network-level failure (like a CORS block): no HTTP response at all.
+      if (dropConnectionsLeft-- > 0) req.socket.destroy();
+      else res.end("DROP-OK");
     } else if (req.url === "/flaky.ts") {
       if (flakyFailuresLeft-- > 0) res.writeHead(503).end();
       else res.end("OK!");
@@ -136,6 +143,14 @@ test("retries a failing segment before giving up", async () => {
 
   assert.equal(result.ok, true);
   assert.equal(await c.saved[0].blob.text(), "OK!");
+});
+
+test("a network error gets one free retry (without cookies), not counted as a retry", async () => {
+  dropConnectionsLeft = 1;
+  const c = collect();
+  const result = await runHlsDownload({ url: `${base}/drop.m3u8`, title: "HC", tabId: 7, jobId: "drop", retries: 0, ...c });
+  assert.equal(result.ok, true);
+  assert.equal(await c.saved[0].blob.text(), "DROP-OK");
 });
 
 test("a segment that keeps failing gives a clear error and saves nothing", async () => {

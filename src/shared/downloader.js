@@ -33,15 +33,24 @@ function sleep(ms, signal) {
 }
 
 async function fetchWithRetry(url, what, signal, { retries, retryDelay }) {
+  // Cookies are sent where SwiftSkip has host access (Toledo, Kaltura). On
+  // other CDNs a cookie request is blocked by CORS, while Kaltura's signed
+  // URLs work fine without — so on a network error, try once without cookies.
+  let credentials = "include";
   for (let attempt = 0; ; attempt++) {
     try {
-      const response = await fetch(url, { credentials: "include", signal });
+      const response = await fetch(url, { credentials, signal });
       if (!response.ok) {
         throw new Error(`Could not fetch ${what} (HTTP ${response.status}).`);
       }
       return response;
     } catch (error) {
       if (signal.aborted || error.name === "AbortError") throw abortError();
+      if (error instanceof TypeError && credentials === "include") {
+        credentials = "omit";
+        attempt--; // doesn't count as a retry
+        continue;
+      }
       if (attempt >= retries) throw error;
       await sleep(retryDelay * 2 ** attempt, signal);
     }

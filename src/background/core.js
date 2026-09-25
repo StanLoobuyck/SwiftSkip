@@ -6,6 +6,7 @@
 
 import { buildLectureTitle, sanitizeFilename } from "../shared/filename.js";
 import { ext } from "../shared/ext.js";
+import { startSiteManagement } from "./sites.js";
 
 export { ext };
 
@@ -264,6 +265,7 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
     tabStates.delete(tabId);
   });
 
+  startSiteManagement();
   if (__DEV__) devReloadTestPages();
 }
 
