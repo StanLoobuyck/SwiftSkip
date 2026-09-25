@@ -241,16 +241,28 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
     tabStates.delete(tabId);
   });
 
-  // Dev builds (npm run dev:*): open the local test page ourselves once loaded,
-  // so it always has the content script; after a rebuild, reload it instead.
-  if (__DEV__) {
-    ext.runtime.onInstalled.addListener(async () => {
-      const tabs = await ext.tabs.query({ url: ["http://localhost/*", "http://127.0.0.1/*"] });
-      if (tabs.length) {
-        for (const tab of tabs) ext.tabs.reload(tab.id);
-      } else {
-        ext.tabs.create({ url: __DEV_TEST_URL__ });
-      }
-    });
+  if (__DEV__) devShowTestPage();
+}
+
+// Dev builds (npm run dev:*): once per extension load, open the local test page
+// (or reload it after a rebuild) so it always has the current content script.
+// Not tied to onInstalled: with the kept dev profile, Chrome doesn't fire it
+// on later runs. storage.session is cleared on every extension (re)load but
+// survives Chrome's service worker going idle and waking up again.
+async function devShowTestPage() {
+  try {
+    const { devTestPageShown } = await ext.storage.session.get("devTestPageShown");
+    if (devTestPageShown) return;
+    await ext.storage.session.set({ devTestPageShown: true });
+  } catch {
+    // No storage.session: fine for Firefox's MV2 background page, which only
+    // starts once per extension load anyway.
+  }
+
+  const tabs = await ext.tabs.query({ url: ["http://localhost/*", "http://127.0.0.1/*"] });
+  if (tabs.length) {
+    for (const tab of tabs) ext.tabs.reload(tab.id);
+  } else {
+    ext.tabs.create({ url: __DEV_TEST_URL__ });
   }
 }
