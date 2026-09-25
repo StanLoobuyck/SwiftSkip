@@ -8,11 +8,11 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 
 ## Phase 0 — Foundation
 
-- [ ] Dev script: fall back to a free port when 8123 is taken, stop cleanly on errors
-- [ ] Code on GitHub (`StanLoobuyck/SwiftSkip`), old zips replaced by GitHub Releases
-- [ ] CI: tests + lint + build on every push
-- [ ] Release workflow: pushing a `v*` tag builds the zips and attaches them to a GitHub Release
-- [ ] `LICENSE` (MIT)
+- [x] Dev script: fall back to a free port when 8123 is taken, stop cleanly on errors
+- [x] Code on GitHub (`StanLoobuyck/SwiftSkip`), old zips replaced by GitHub Releases
+- [x] CI: tests + lint + build on every push
+- [x] Release workflow: pushing a `v*` tag builds the zips and attaches them to a GitHub Release
+- [x] `LICENSE` (MIT)
 
 ## Phase 1 — Downloads that hold up on real lectures
 
