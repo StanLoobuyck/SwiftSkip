@@ -3,7 +3,8 @@
 //   npm run dev:chrome    (Chromium, Chrome or Brave)
 //
 // 1. builds dist/<browser> in dev mode and rebuilds on every change in src/
-// 2. serves the local test page on http://localhost:8123
+// 2. serves the local test page on http://localhost:8123 (or the next free
+//    port, so dev:firefox and dev:chrome can run side by side)
 // 3. opens the browser with the extension loaded; it reloads on each rebuild
 //
 // The browser uses its own profile in .profiles/, kept between runs, so you
@@ -19,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { fixturesExist, generateFixtures } from "./fixtures.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PORT = 8123;
+const FIRST_PORT = 8123;
 const target = process.argv[2];
 
 const BINARIES = {
@@ -36,7 +37,10 @@ function findBinary() {
   if (process.env.SWIFTSKIP_BROWSER) return process.env.SWIFTSKIP_BROWSER;
   for (const name of BINARIES[target]) {
     try {
-      return execFileSync("which", [name], { encoding: "utf8" }).trim();
+      return execFileSync("which", [name], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
     } catch {
       /* try next */
     }
@@ -74,7 +78,7 @@ const TYPES = {
 };
 
 // Minimal static server; supports Range requests so the <video> can seek.
-createServer((req, res) => {
+const server = createServer((req, res) => {
   const path = decodeURIComponent(new URL(req.url, "http://x").pathname);
   const file = normalize(join(FIXTURES, path.endsWith("/") ? path + "index.html" : path));
   if (!file.startsWith(FIXTURES) || !existsSync(file) || statSync(file).isDirectory()) {
@@ -94,7 +98,30 @@ createServer((req, res) => {
     res.writeHead(200, { ...headers, "Content-Length": size });
     createReadStream(file).pipe(res);
   }
-}).listen(PORT, () => console.log(`Test page: http://localhost:${PORT}/`));
+});
+
+function listen(port) {
+  return new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, () => {
+      server.off("error", reject);
+      resolve(port);
+    });
+  });
+}
+
+// Started before anything else, so a failure here leaves no stray processes.
+let port = FIRST_PORT;
+for (;;) {
+  try {
+    await listen(port);
+    break;
+  } catch (error) {
+    if (error.code !== "EADDRINUSE" || port >= FIRST_PORT + 20) throw error;
+    port++;
+  }
+}
+console.log(`Test page: http://localhost:${port}/`);
 
 // ─── Build (watch) + browser ──────────────────────────────────────────────────
 
@@ -128,7 +155,7 @@ const webExt = join(ROOT, "node_modules", ".bin", "web-ext");
 const common = [
   "run",
   "--source-dir", join(ROOT, "dist", target),
-  "--start-url", `http://localhost:${PORT}/`,
+  "--start-url", `http://localhost:${port}/`,
   "--profile-create-if-missing",
   "--keep-profile-changes",
 ];

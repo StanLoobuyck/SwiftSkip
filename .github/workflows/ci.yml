@@ -1,0 +1,26 @@
+# Runs on every push and pull request: tests, Mozilla lint, and a build of
+# all three browser versions (downloadable from the run's "Artifacts").
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: swiftskip-builds
+          path: web-ext-artifacts/*.zip
