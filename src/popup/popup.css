@@ -250,8 +250,18 @@ header {
   display: none;
 }
 
+.popup-download-progress.failed #popup-download-meta {
+  color: #ff8a8a;
+  white-space: normal;
+}
+
+.popup-download-progress.failed #popup-download-fill {
+  background: #ff6b6b;
+}
+
 .popup-download-progress-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;

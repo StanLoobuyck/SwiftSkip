@@ -1,4 +1,5 @@
 import { DEFAULT_KEYBINDS, DEFAULT_SKIP, SUPPORTS_DOWNLOAD } from "../shared/settings.js";
+import { formatProgressMeta } from "../shared/format.js";
 
 const KEYBIND_LABELS = {
   skip_forward: "Skip Forward",
@@ -303,17 +304,14 @@ function renderDownloadState(state = currentDownloadState) {
     0,
     Math.min(100, Math.round(Number(currentDownloadState.percent) || 0)),
   );
-  const hasSegmentCount =
-    Number.isFinite(currentDownloadState.downloaded) &&
-    Number.isFinite(currentDownloadState.total) &&
-    currentDownloadState.total > 0;
   const enabled = document.getElementById("toggle-enabled").checked;
+  const failed = currentDownloadState.phase === "Download failed";
 
-  fill.style.width = `${percent}%`;
+  fill.style.width = `${failed ? 100 : percent}%`;
+  progress.classList.toggle("failed", failed);
   label.textContent = currentDownloadState.phase || "Ready";
-  meta.textContent = hasSegmentCount
-    ? `${percent}% - ${currentDownloadState.downloaded}/${currentDownloadState.total}`
-    : `${percent}%`;
+  meta.textContent = formatProgressMeta(currentDownloadState);
+  meta.title = currentDownloadState.error || "";
 
   const row = button.closest(".download-row");
 
@@ -337,13 +335,23 @@ function renderDownloadState(state = currentDownloadState) {
   }
 
   button.textContent = "Download Lecture";
-  progress.hidden = !["Complete", "Saved playlist", "Download failed"].includes(
+  progress.hidden = !["Complete", "Download failed"].includes(
     currentDownloadState.phase,
   );
 }
 
-function requestDownloadState() {
-  chrome.runtime.sendMessage({ action: "getLectureDownloadState" }, (response) => {
+// Download state is tracked per tab; the popup shows the tab it was opened on.
+let activeTabId = null;
+const activeTabReady = new Promise((resolve) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    activeTabId = tabs[0]?.id ?? null;
+    resolve(activeTabId);
+  });
+});
+
+async function requestDownloadState() {
+  const tabId = await activeTabReady;
+  chrome.runtime.sendMessage({ action: "getLectureDownloadState", tabId }, (response) => {
     if (chrome.runtime.lastError || !response || !response.state) {
       renderDownloadState({ available: false, phase: "No lecture detected" });
       return;
@@ -353,7 +361,7 @@ function requestDownloadState() {
   });
 }
 
-document.getElementById("popup-download-btn").addEventListener("click", () => {
+document.getElementById("popup-download-btn").addEventListener("click", async () => {
   const { button } = getDownloadElements();
   button.disabled = true;
   button.textContent = "Preparing";
@@ -364,7 +372,8 @@ document.getElementById("popup-download-btn").addEventListener("click", () => {
     percent: 0,
   });
 
-  chrome.runtime.sendMessage({ action: "startLectureDownload" }, (response) => {
+  const tabId = await activeTabReady;
+  chrome.runtime.sendMessage({ action: "startLectureDownload", tabId }, (response) => {
     if (chrome.runtime.lastError || !response || !response.state) {
       renderDownloadState({
         active: false,
@@ -376,16 +385,18 @@ document.getElementById("popup-download-btn").addEventListener("click", () => {
     }
 
     renderDownloadState(response.state);
-    if (response.state.error && !response.state.fallback) {
-      setStatus(response.state.error, true);
+    if (response.state.error) {
+      setStatus("Download failed.", true);
     }
   });
 });
 
-document.getElementById("popup-download-cancel").addEventListener("click", () => {
+document.getElementById("popup-download-cancel").addEventListener("click", async () => {
+  const tabId = await activeTabReady;
   chrome.runtime.sendMessage(
     {
       action: "cancelLectureDownload",
+      tabId,
       jobId: currentDownloadState.jobId,
     },
     (response) => {
@@ -398,7 +409,12 @@ document.getElementById("popup-download-cancel").addEventListener("click", () =>
 });
 
 chrome.runtime.onMessage.addListener((msg) => {
-  if (msg && msg.action === "lectureDownloadStateChanged" && msg.state) {
+  if (
+    msg &&
+    msg.action === "lectureDownloadStateChanged" &&
+    msg.state &&
+    msg.state.tabId === activeTabId
+  ) {
     renderDownloadState(msg.state);
   }
 });

@@ -3,6 +3,7 @@
 
 import { DEFAULT_KEYBINDS, DEFAULT_SKIP, SUPPORTS_DOWNLOAD } from "../shared/settings.js";
 import { isLectureManifestUrl } from "../shared/hls.js";
+import { formatProgressMeta } from "../shared/format.js";
 
 (function () {
   // ─── domain check ──────────────────────────────────────────────────────────
@@ -142,25 +143,28 @@ import { isLectureManifestUrl } from "../shared/hls.js";
     }
   }
 
+  function getPageTitle() {
+    try {
+      if (window.top && window.top !== window && window.top.document.title) {
+        return window.top.document.title;
+      }
+    } catch (e) {
+      /* cross-origin top frame — stick with document.title */
+    }
+    return document.title;
+  }
+
   function rememberLectureUrl(url) {
     if (!isLectureManifestUrl(url)) return false;
 
     detectedLectureUrl = url;
     downloadDismissed = false;
     injectDownloadButton();
-    let pageTitle = document.title;
-    try {
-      if (window.top && window.top !== window && window.top.document.title) {
-        pageTitle = window.top.document.title;
-      }
-    } catch (e) {
-      /* cross-origin top frame — stick with document.title */
-    }
 
     chrome.runtime.sendMessage({
       action: "registerLectureDownloadUrl",
       url: detectedLectureUrl,
-      title: pageTitle,
+      title: getPageTitle(),
     });
     stopHlsDetection();
     return true;
@@ -235,6 +239,50 @@ import { isLectureManifestUrl } from "../shared/hls.js";
     return video ? getPlayerContainer(video) : document.body;
   }
 
+  // ─── Positioning over the player ──────────────────────────────────────────
+  // On Toledo the player is an iframe, so "the viewport" is the player and the
+  // CSS defaults (fixed, relative to the viewport) line up with it. When the
+  // player is just part of a bigger page, pin our UI to the player's box.
+  function getPlayerRect() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) return null;
+    const video = getVideo();
+    if (!video) return null;
+    const rect = getPlayerContainer(video).getBoundingClientRect();
+    if (rect.width < 100 || rect.height < 60) return null;
+    return rect;
+  }
+
+  function positionOverPlayer(el, placement) {
+    const rect = getPlayerRect();
+    if (!rect) {
+      el.style.left = "";
+      el.style.top = "";
+      return;
+    }
+    if (placement === "center") {
+      el.style.left = `${rect.left + rect.width / 2}px`;
+      el.style.top = `${rect.top + rect.height / 2}px`;
+    } else {
+      el.style.left = `${rect.left + 18}px`;
+      el.style.top = `${rect.top + 18}px`;
+    }
+  }
+
+  let positionFrame = null;
+  function schedulePositionUpdate() {
+    if (positionFrame) return;
+    positionFrame = requestAnimationFrame(() => {
+      positionFrame = null;
+      if (downloadWrapEl && downloadWrapEl.isConnected) positionOverPlayer(downloadWrapEl, "top-left");
+      if (osdEl && osdEl.isConnected && osdEl.style.display !== "none") positionOverPlayer(osdEl, "center");
+    });
+  }
+  window.addEventListener("scroll", schedulePositionUpdate, { capture: true, passive: true });
+  window.addEventListener("resize", schedulePositionUpdate, { passive: true });
+  // The player often changes size after we first place things (video loads).
+  const playerResizeObserver = new ResizeObserver(schedulePositionUpdate);
+  let observedPlayer = null;
+
   function placeDownloadControl() {
     if (!downloadWrapEl || downloadDismissed) return;
 
@@ -242,6 +290,15 @@ import { isLectureManifestUrl } from "../shared/hls.js";
     if (parent && downloadWrapEl.parentElement !== parent) {
       parent.appendChild(downloadWrapEl);
     }
+
+    const video = getVideo();
+    const player = video && getPlayerContainer(video);
+    if (player && player !== observedPlayer) {
+      if (observedPlayer) playerResizeObserver.unobserve(observedPlayer);
+      playerResizeObserver.observe(player);
+      observedPlayer = player;
+    }
+    positionOverPlayer(downloadWrapEl, "top-left");
   }
 
   function setDownloadProgress(progress) {
@@ -266,15 +323,14 @@ import { isLectureManifestUrl } from "../shared/hls.js";
       Math.min(100, Math.round(Number(progress.percent) || 0)),
     );
     const phase = progress.phase || "Downloading";
-    const hasSegmentCount =
-      Number.isFinite(progress.downloaded) && Number.isFinite(progress.total);
+    const failed = phase === "Download failed";
 
     downloadProgressEl.hidden = false;
-    downloadProgressFillEl.style.width = `${percent}%`;
+    downloadProgressEl.classList.toggle("swiftskip-download-failed", failed);
+    downloadProgressFillEl.style.width = `${failed ? 100 : percent}%`;
     downloadProgressLabelEl.textContent = phase;
-    downloadProgressMetaEl.textContent = hasSegmentCount
-      ? `${percent}% - ${progress.downloaded}/${progress.total}`
-      : `${percent}%`;
+    downloadProgressMetaEl.textContent = formatProgressMeta(progress);
+    downloadProgressEl.title = progress.error || "";
 
     if (downloadButtonEl) {
       downloadButtonEl.disabled = isLectureDownloading;
@@ -287,11 +343,9 @@ import { isLectureManifestUrl } from "../shared/hls.js";
       downloadDismissButtonEl.setAttribute("aria-label", label);
     }
 
-    if (
-      progress.active === false &&
-      ["Complete", "Canceled", "Saved playlist", "Download failed"].includes(phase)
-    ) {
-      downloadResetTimer = setTimeout(resetDownloadProgress, 1800);
+    if (progress.active === false && ["Complete", "Canceled", "Download failed"].includes(phase)) {
+      // Errors stay up longer so there's time to read them.
+      downloadResetTimer = setTimeout(resetDownloadProgress, failed ? 8000 : 1800);
     }
   }
 
@@ -300,6 +354,8 @@ import { isLectureManifestUrl } from "../shared/hls.js";
     if (!downloadProgressEl || !downloadProgressFillEl) return;
 
     downloadProgressEl.hidden = true;
+    downloadProgressEl.classList.remove("swiftskip-download-failed");
+    downloadProgressEl.title = "";
     downloadProgressFillEl.style.width = "0%";
     downloadProgressLabelEl.textContent = "Preparing";
     downloadProgressMetaEl.textContent = "0%";
@@ -422,55 +478,28 @@ import { isLectureManifestUrl } from "../shared/hls.js";
         });
         showOSD("download", null, "Preparing download");
 
+        // Progress (including "Complete" / "Download failed") arrives via
+        // lectureDownloadProgress messages; the reply only matters if the
+        // background couldn't be reached at all.
         chrome.runtime.sendMessage(
           {
             action: "startLectureDownload",
             jobId: activeDownloadJobId,
             url: detectedLectureUrl,
-            title: document.title,
+            title: getPageTitle(),
           },
           (response) => {
-            const state = response && response.state;
-            if (chrome.runtime.lastError) {
-              resetDownloadProgress();
-              showOSD("download", null, "Download failed");
+            if (chrome.runtime.lastError || !response) {
+              setDownloadProgress({
+                jobId: activeDownloadJobId,
+                phase: "Download failed",
+                error: "SwiftSkip's background script didn't respond. Reload the page and try again.",
+                active: false,
+              });
               return;
             }
-
-            if ((response && response.canceled) || (state && state.phase === "Canceled")) {
-              resetDownloadProgress();
-              showOSD("download", null, "Download canceled");
-              return;
-            }
-
-            if (
-              response &&
-              response.ok === false &&
-              !response.fallback &&
-              !(state && state.fallback)
-            ) {
-              resetDownloadProgress();
-              showOSD("download", null, "Download failed");
-              return;
-            }
-
-            if (
-              (response && response.fallback === "m3u8") ||
-              (state && state.fallback === "m3u8")
-            ) {
-              resetDownloadProgress();
-              showOSD("download", null, "Saved playlist");
-              return;
-            }
-
-            setDownloadProgress({
-              jobId: (response && response.state && response.state.jobId) || activeDownloadJobId,
-              phase: "Complete",
-              percent: 100,
-              active: false,
-            });
-            downloadResetTimer = setTimeout(resetDownloadProgress, 1800);
-            showOSD("download", null, "Download started");
+            const state = response.state || {};
+            if (state.phase === "Complete") showOSD("download", null, "Download saved");
           },
         );
       });
@@ -591,6 +620,7 @@ import { isLectureManifestUrl } from "../shared/hls.js";
 
     osdEl.classList.remove("swiftskip-fade-out");
     osdEl.style.display = "flex";
+    positionOverPlayer(osdEl, "center");
 
     clearTimeout(osdTimeout);
     clearTimeout(osdFadeTimeout);

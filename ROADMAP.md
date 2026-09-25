@@ -16,13 +16,15 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 
 ## Phase 1 — Downloads that hold up on real lectures
 
-- [ ] Don't keep the whole lecture in RAM (store segments as Blobs so the browser can page them to disk)
-- [ ] Output `.mp4` instead of `.ts` (remux with mux.js)
-- [ ] Retry failed segments (3× with backoff) and fetch ~4 in parallel
-- [ ] Clear error message instead of saving a useless `.m3u8`
+- [x] Download button and on-screen overlay positioned over the player, not the window (test page / non-iframe players)
+- [x] Don't keep the whole lecture in RAM (store segments as Blobs so the browser can page them to disk)
+- [ ] 🔍 Check memory use on a real 2-hour lecture
+- [x] Output `.mp4` instead of `.ts` (remux with mux.js; falls back to `.ts` if that fails)
+- [x] Retry failed segments (3× with backoff) and fetch 4 in parallel
+- [x] Clear error message instead of saving a useless `.m3u8`
 - [ ] 🔍 Detect both streams (camera + slides) and let the user choose
 - [ ] Filename from the Toledo breadcrumb: course – lecture – date
-- [ ] Per-tab download state; several downloads at once; speed + time remaining
+- [x] Per-tab download state; several downloads at once; speed + time remaining
 
 ## Phase 2 — Playback controls
 
@@ -50,6 +52,7 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 - [ ] Options page for settings/keybinds (instead of the cramped popup)
 - [ ] Welcome page on first install
 - [ ] Popup shows what was detected for the current tab
+- [ ] After an update, open Toledo tabs need a refresh in Chrome — inject into open tabs on update (needs `scripting` permission)
 - [ ] Light/dark follows the system; keyboard + screen-reader accessible popup
 
 ## Phase 5 — Testing & code quality

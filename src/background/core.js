@@ -1,29 +1,83 @@
 // SwiftSkip background — shared by every browser build.
-// Tracks the lecture download state and answers messages from the content
-// script and popup. Where the download itself runs differs per browser, so the
-// entry file (firefox.js / chrome.js / safari.js) passes in `runDownload` and
-// `cancelDownload`.
+// Tracks the lecture download state per tab and answers messages from the
+// content script and popup. Where the download itself runs differs per
+// browser, so the entry file (firefox.js / chrome.js / safari.js) passes in
+// `runDownload` and `cancelDownload`.
 
 import { sanitizeFilename } from "../shared/filename.js";
 
 export const ext = globalThis.browser ?? globalThis.chrome;
 
-// ─── Download state ───────────────────────────────────────────────────────────
+// ─── Download state (one per tab) ─────────────────────────────────────────────
 
-const lectureDownloadState = {
-  available: false,
-  active: false,
-  jobId: null,
-  url: null,
-  title: null,
-  tabId: null,
-  phase: "No lecture detected",
-  downloaded: 0,
-  total: 0,
-  percent: 0,
-  fallback: null,
-  error: null,
-};
+const tabStates = new Map();
+
+function createState(tabId) {
+  return {
+    tabId,
+    available: false,
+    active: false,
+    jobId: null,
+    url: null,
+    title: null,
+    phase: "No lecture detected",
+    downloaded: 0,
+    total: 0,
+    percent: 0,
+    speed: 0,
+    eta: null,
+    type: null,
+    error: null,
+  };
+}
+
+function getState(tabId) {
+  if (!tabStates.has(tabId)) tabStates.set(tabId, createState(tabId));
+  return tabStates.get(tabId);
+}
+
+const FINISHED_PHASES = ["Complete", "Canceled", "Download failed"];
+
+function publishDownloadState(state) {
+  if (state.tabId && (state.active || FINISHED_PHASES.includes(state.phase))) {
+    ext.tabs.sendMessage(state.tabId, {
+      action: "lectureDownloadProgress",
+      ...state,
+    }).catch(() => {
+      /* Tab may have navigated away. */
+    });
+  }
+
+  ext.runtime.sendMessage({
+    action: "lectureDownloadStateChanged",
+    state: { ...state },
+  }).catch(() => {
+    /* No popup listening. */
+  });
+}
+
+function setDownloadState(tabId, patch) {
+  const state = Object.assign(getState(tabId), patch);
+  publishDownloadState(state);
+  return { ...state };
+}
+
+export function reportProgress(progress) {
+  if (!progress.tabId) return;
+  const state = getState(progress.tabId);
+  if (progress.jobId && state.jobId && progress.jobId !== state.jobId) return;
+
+  const numberOr = (value, fallback) => (Number.isFinite(value) ? value : fallback);
+  setDownloadState(progress.tabId, {
+    phase: progress.phase || state.phase,
+    downloaded: numberOr(progress.downloaded, state.downloaded),
+    total: numberOr(progress.total, state.total),
+    percent: numberOr(progress.percent, state.percent),
+    speed: numberOr(progress.speed, 0),
+    eta: numberOr(progress.eta, null),
+    active: !["Complete", "Canceled"].includes(progress.phase),
+  });
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,202 +97,115 @@ function createJobId() {
   return `swiftskip-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function getPublicDownloadState() {
-  return { ...lectureDownloadState };
-}
-
-function publishDownloadState() {
-  const state = getPublicDownloadState();
-  const shouldNotifyTab =
-    state.active ||
-    ["Complete", "Canceled", "Saved playlist", "Download failed"].includes(state.phase);
-
-  if (state.tabId && shouldNotifyTab) {
-    ext.tabs.sendMessage(state.tabId, {
-      action: "lectureDownloadProgress",
-      ...state,
-    }).catch(() => {
-      /* Tab may have navigated away. */
-    });
-  }
-
-  ext.runtime.sendMessage({
-    action: "lectureDownloadStateChanged",
-    state,
-  }).catch(() => {
-    /* No popup listening. */
-  });
-}
-
-function setDownloadState(patch, shouldPublish = true) {
-  Object.assign(lectureDownloadState, patch);
-  if (shouldPublish) publishDownloadState();
-  return getPublicDownloadState();
-}
-
-export function reportProgress(progress) {
-  setDownloadState({
-    jobId: progress.jobId || lectureDownloadState.jobId,
-    tabId: progress.tabId || lectureDownloadState.tabId,
-    phase: progress.phase || lectureDownloadState.phase,
-    downloaded: Number.isFinite(progress.downloaded) ? progress.downloaded : lectureDownloadState.downloaded,
-    total: Number.isFinite(progress.total) ? progress.total : lectureDownloadState.total,
-    percent: Number.isFinite(progress.percent) ? progress.percent : lectureDownloadState.percent,
-    active: !["Complete", "Canceled"].includes(progress.phase),
-  });
+function errorMessage(error) {
+  return error && error.message ? error.message : String(error);
 }
 
 // ─── Main download orchestrator ───────────────────────────────────────────────
 
-async function startLectureDownload({ url, title, tabId, jobId }, runDownload) {
-  if (lectureDownloadState.active) {
-    return getPublicDownloadState();
+async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
+  const state = getState(tabId);
+  if (state.active) {
+    return { ...state };
   }
 
-  const resolvedUrl = url || lectureDownloadState.url;
+  const resolvedUrl = url || state.url;
   if (!resolvedUrl) {
-    return setDownloadState({
+    return setDownloadState(tabId, {
       available: false,
-      active: false,
       phase: "No lecture detected",
       error: "No lecture stream has been detected yet.",
     });
   }
 
-  const resolvedTitle = sanitizeFilename(title || lectureDownloadState.title);
-  const resolvedTabId = tabId || lectureDownloadState.tabId;
+  const resolvedTitle = sanitizeFilename(title || state.title);
   const resolvedJobId = jobId || createJobId();
 
-  setDownloadState({
+  setDownloadState(tabId, {
+    ...createState(tabId),
     available: true,
     active: true,
     jobId: resolvedJobId,
     url: resolvedUrl,
     title: resolvedTitle,
-    tabId: resolvedTabId,
     phase: "Preparing",
-    downloaded: 0,
-    total: 0,
-    percent: 0,
-    fallback: null,
-    error: null,
   });
 
-  const response = await runDownload({
-    url: resolvedUrl,
-    title: resolvedTitle,
-    tabId: resolvedTabId,
-    jobId: resolvedJobId,
-  });
+  let response;
+  try {
+    response = await runDownload({
+      url: resolvedUrl,
+      title: resolvedTitle,
+      tabId,
+      jobId: resolvedJobId,
+    });
+  } catch (error) {
+    response = { ok: false, error: errorMessage(error) };
+  }
 
   if (response && response.canceled) {
-    return setDownloadState({ active: false, phase: "Canceled", percent: 0, error: null });
+    return setDownloadState(tabId, { active: false, phase: "Canceled", percent: 0, error: null });
   }
 
-  if (response && response.fallback) {
-    return setDownloadState({
-      active: false,
-      phase: "Saved playlist",
-      percent: 0,
-      fallback: response.fallback,
-      error: response.error || null,
-    });
+  if (!response || response.ok === false) {
+    const error = (response && response.error) || "Download failed.";
+    console.error("SwiftSkip download failed:", error);
+    return setDownloadState(tabId, { active: false, phase: "Download failed", error });
   }
 
-  if (response && response.ok === false) {
-    return setDownloadState({
-      active: false,
-      phase: "Download failed",
-      error: response.error || "Download failed.",
-    });
-  }
-
-  return setDownloadState({ active: false, phase: "Complete", percent: 100, error: null });
+  return setDownloadState(tabId, {
+    active: false,
+    phase: "Complete",
+    percent: 100,
+    type: response.type,
+    error: null,
+  });
 }
 
 // ─── Message handler ──────────────────────────────────────────────────────────
 
-function errorMessage(error) {
-  return error && error.message ? error.message : String(error);
-}
-
 // extraHandlers: { [action]: (msg, sender) => response | Promise<response> }
 export function startBackground({ runDownload, cancelDownload, extraHandlers = {} }) {
+  // Messages from content scripts carry their tab; the popup passes `tabId`.
+  const tabOf = (msg, sender) => (sender.tab && sender.tab.id) || msg.tabId;
+
   const handlers = {
     registerLectureDownloadUrl(msg, sender) {
-      setDownloadState({
-        available: true,
-        url: msg.url,
-        title: sanitizeFilename(msg.title),
-        tabId: sender.tab && sender.tab.id,
-        phase: lectureDownloadState.active ? lectureDownloadState.phase : "Ready",
-        error: null,
-      });
-      return { ok: true, state: getPublicDownloadState() };
+      const tabId = tabOf(msg, sender);
+      const state = getState(tabId);
+      return {
+        ok: true,
+        state: setDownloadState(tabId, {
+          available: true,
+          url: msg.url,
+          title: sanitizeFilename(msg.title),
+          phase: state.active ? state.phase : "Ready",
+          error: state.active ? state.error : null,
+        }),
+      };
     },
 
-    getLectureDownloadState() {
-      return { ok: true, state: getPublicDownloadState() };
+    getLectureDownloadState(msg, sender) {
+      return { ok: true, state: { ...getState(tabOf(msg, sender)) } };
     },
 
     relayLectureDownloadProgress(msg) {
       reportProgress(msg);
     },
 
-    async cancelLectureDownload(msg) {
-      const response = await cancelDownload(msg.jobId || lectureDownloadState.jobId);
-      setDownloadState({ active: false, phase: "Canceled", percent: 0, error: null });
+    async cancelLectureDownload(msg, sender) {
+      const tabId = tabOf(msg, sender);
+      const response = await cancelDownload(msg.jobId || getState(tabId).jobId);
+      setDownloadState(tabId, { active: false, phase: "Canceled", percent: 0, error: null });
       return response || { ok: true };
     },
 
-    startLectureDownload(msg, sender) {
-      return startLectureDownload(
-        {
-          url: msg.url,
-          title: msg.title,
-          tabId: (sender.tab && sender.tab.id) || msg.tabId,
-          jobId: msg.jobId,
-        },
+    async startLectureDownload(msg, sender) {
+      const state = await startLectureDownload(
+        { tabId: tabOf(msg, sender), url: msg.url, title: msg.title, jobId: msg.jobId },
         runDownload,
-      )
-        .then((state) => ({ ok: !state.error, state }))
-        .catch((error) => {
-          const message = errorMessage(error);
-          console.error("SwiftSkip download failed:", message);
-          const state = setDownloadState({
-            active: false,
-            phase: "Download failed",
-            error: message,
-            fallback: "m3u8",
-          });
-          // Best-effort fallback: save the raw playlist
-          saveFile(msg.url || lectureDownloadState.url, msg.title || lectureDownloadState.title, "m3u8")
-            .catch((e) => console.error("SwiftSkip fallback download failed:", e));
-          return { ok: false, error: message, state };
-        });
-    },
-
-    downloadLecture(msg, sender) {
-      return startLectureDownload(
-        {
-          url: msg.url,
-          title: msg.title,
-          tabId: sender.tab && sender.tab.id,
-          jobId: msg.jobId,
-        },
-        runDownload,
-      )
-        .then((state) => ({
-          ok: !state.error,
-          fallback: state.fallback,
-          canceled: state.phase === "Canceled",
-          state,
-        }))
-        .catch((error) => {
-          const message = errorMessage(error);
-          console.error("SwiftSkip download failed:", message);
-          return { ok: false, error: message };
-        });
+      );
+      return { ok: !state.error, state };
     },
 
     ...extraHandlers,
@@ -265,4 +232,25 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
     if (result !== undefined) sendResponse(result);
     return false;
   });
+
+  ext.tabs.onRemoved.addListener((tabId) => {
+    const state = tabStates.get(tabId);
+    if (state && state.active && state.jobId) {
+      Promise.resolve(cancelDownload(state.jobId)).catch(() => {});
+    }
+    tabStates.delete(tabId);
+  });
+
+  // Dev builds (npm run dev:*): open the local test page ourselves once loaded,
+  // so it always has the content script; after a rebuild, reload it instead.
+  if (__DEV__) {
+    ext.runtime.onInstalled.addListener(async () => {
+      const tabs = await ext.tabs.query({ url: ["http://localhost/*", "http://127.0.0.1/*"] });
+      if (tabs.length) {
+        for (const tab of tabs) ext.tabs.reload(tab.id);
+      } else {
+        ext.tabs.create({ url: __DEV_TEST_URL__ });
+      }
+    });
+  }
 }

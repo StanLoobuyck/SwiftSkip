@@ -145,11 +145,24 @@
   display: none;
 }
 
+.swiftskip-download-failed .swiftskip-download-progress-meta {
+  white-space: normal;
+  line-height: 1.35;
+  color: #ffb4b4;
+  flex-shrink: 1;
+}
+
+.swiftskip-download-failed .swiftskip-download-progress-fill {
+  background: #ff6b6b;
+  box-shadow: none;
+}
+
 .swiftskip-download-progress-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 4px 10px;
   margin-bottom: 8px;
 }
 

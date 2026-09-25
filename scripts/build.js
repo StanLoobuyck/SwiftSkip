@@ -4,6 +4,7 @@
 //
 // --dev    also runs the content script on localhost (for the test page)
 // --watch  rebuild whenever something in src/ changes
+// --watch-only  like --watch, but skip the initial build (dev.js already did it)
 // --zip    write web-ext-artifacts/swiftskip-<browser>-<version>.zip
 
 import { watch } from "node:fs";
@@ -21,6 +22,7 @@ const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith("--")));
 const targetArg = args.find((a) => !a.startsWith("--")) || "all";
 const dev = flags.has("--dev");
+const watching = flags.has("--watch") || flags.has("--watch-only");
 
 const targets = targetArg === "all" ? TARGETS : [targetArg];
 for (const t of targets) {
@@ -62,6 +64,8 @@ async function buildTarget(target) {
     define: {
       __BROWSER__: JSON.stringify(target),
       __DEV__: JSON.stringify(dev),
+      // Where dev builds open the local test page (set by dev.js).
+      __DEV_TEST_URL__: JSON.stringify(process.env.SWIFTSKIP_TEST_URL || "http://localhost:8123/"),
     },
     logLevel: "warning",
   });
@@ -105,13 +109,14 @@ async function buildAll() {
     );
   } catch (error) {
     console.error(`✘ build failed: ${error.message}`);
-    if (!flags.has("--watch")) process.exit(1);
+    if (!watching) process.exit(1);
   }
 }
 
-await buildAll();
+if (flags.has("--watch-only")) firstBuild = false;
+else await buildAll();
 
-if (flags.has("--watch")) {
+if (watching) {
   let timer = null;
   watch(SRC, { recursive: true }, () => {
     clearTimeout(timer);

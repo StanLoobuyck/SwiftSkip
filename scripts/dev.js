@@ -5,7 +5,9 @@
 // 1. builds dist/<browser> in dev mode and rebuilds on every change in src/
 // 2. serves the local test page on http://localhost:8123 (or the next free
 //    port, so dev:firefox and dev:chrome can run side by side)
-// 3. opens the browser with the extension loaded; it reloads on each rebuild
+// 3. opens the browser with the extension loaded; it reloads on each rebuild.
+//    The extension itself opens the test page once it's loaded (see
+//    background/core.js), so the page never exists before SwiftSkip does.
 //
 // The browser uses its own profile in .profiles/, kept between runs, so you
 // only have to log in to Toledo once there.
@@ -144,9 +146,12 @@ const shutdown = () => {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-// Initial build first, so the browser never starts from an empty folder.
+// Initial build first, so the browser never starts from an empty folder; the
+// watcher then only rebuilds on changes (a second build right at startup would
+// make web-ext reload the extension while the browser is still starting).
+process.env.SWIFTSKIP_TEST_URL = `http://localhost:${port}/`;
 execFileSync(process.execPath, ["scripts/build.js", target, "--dev"], { cwd: ROOT, stdio: "inherit" });
-run(process.execPath, ["scripts/build.js", target, "--dev", "--watch"]);
+run(process.execPath, ["scripts/build.js", target, "--dev", "--watch-only"]);
 
 const profile = join(ROOT, ".profiles", `${target}-dev`);
 // web-ext creates the profile folder itself, but not its parent.
@@ -155,7 +160,6 @@ const webExt = join(ROOT, "node_modules", ".bin", "web-ext");
 const common = [
   "run",
   "--source-dir", join(ROOT, "dist", target),
-  "--start-url", `http://localhost:${port}/`,
   "--profile-create-if-missing",
   "--keep-profile-changes",
 ];
