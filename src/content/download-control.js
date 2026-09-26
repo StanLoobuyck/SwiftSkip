@@ -17,14 +17,47 @@ function svg(spec) {
   return node;
 }
 
-const stroke = { fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" };
+const stroke = {
+  fill: "none",
+  stroke: "currentColor",
+  "stroke-width": "2",
+  "stroke-linecap": "round",
+  "stroke-linejoin": "round",
+};
 const ICONS = {
-  download: ["svg", { viewBox: "0 0 24 24", ...stroke }, [["path", { d: "M12 4v11" }], ["path", { d: "m7 10 5 5 5-5" }], ["path", { d: "M5 20h14" }]]],
+  download: [
+    "svg",
+    { viewBox: "0 0 24 24", ...stroke },
+    [
+      ["path", { d: "M12 4v11" }],
+      ["path", { d: "m7 10 5 5 5-5" }],
+      ["path", { d: "M5 20h14" }],
+    ],
+  ],
   collapse: ["svg", { viewBox: "0 0 24 24", ...stroke }, [["path", { d: "m15 6-6 6 6 6" }]]],
   cancel: ["svg", { viewBox: "0 0 24 24", ...stroke }, [["path", { d: "M7 7l10 10M17 7 7 17" }]]],
-  done: ["svg", { viewBox: "0 0 24 24", ...stroke, "stroke-width": "2.4" }, [["path", { d: "m5 12.5 4.5 4.5L19 7.5" }]]],
-  failed: ["svg", { viewBox: "0 0 24 24", ...stroke }, [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M12 7.5v5.5" }], ["path", { d: "M12 16.5h.01" }]]],
-  retry: ["svg", { viewBox: "0 0 24 24", ...stroke }, [["path", { d: "M20 11a8 8 0 1 0-2.3 5.7" }], ["path", { d: "M20 5v6h-6" }]]],
+  done: [
+    "svg",
+    { viewBox: "0 0 24 24", ...stroke, "stroke-width": "2.4" },
+    [["path", { d: "m5 12.5 4.5 4.5L19 7.5" }]],
+  ],
+  failed: [
+    "svg",
+    { viewBox: "0 0 24 24", ...stroke },
+    [
+      ["circle", { cx: "12", cy: "12", r: "9" }],
+      ["path", { d: "M12 7.5v5.5" }],
+      ["path", { d: "M12 16.5h.01" }],
+    ],
+  ],
+  retry: [
+    "svg",
+    { viewBox: "0 0 24 24", ...stroke },
+    [
+      ["path", { d: "M20 11a8 8 0 1 0-2.3 5.7" }],
+      ["path", { d: "M20 5v6h-6" }],
+    ],
+  ],
 };
 
 function icon(name) {
@@ -45,11 +78,26 @@ function el(tag, className) {
 function progressRing(size, strokeWidth, className) {
   const r = (size - strokeWidth) / 2;
   const c = 2 * Math.PI * r;
-  const fillCircle = ["circle", { class: "ss-ring-fill", cx: size / 2, cy: size / 2, r, "stroke-dasharray": c, "stroke-dashoffset": c, "stroke-width": strokeWidth }];
-  const el = svg(["svg", { class: `ss-ring ${className}`, viewBox: `0 0 ${size} ${size}`, "aria-hidden": "true" }, [
-    ["circle", { class: "ss-ring-track", cx: size / 2, cy: size / 2, r, "stroke-width": strokeWidth }],
-    fillCircle,
-  ]]);
+  const fillCircle = [
+    "circle",
+    {
+      class: "ss-ring-fill",
+      cx: size / 2,
+      cy: size / 2,
+      r,
+      "stroke-dasharray": c,
+      "stroke-dashoffset": c,
+      "stroke-width": strokeWidth,
+    },
+  ];
+  const el = svg([
+    "svg",
+    { class: `ss-ring ${className}`, viewBox: `0 0 ${size} ${size}`, "aria-hidden": "true" },
+    [
+      ["circle", { class: "ss-ring-track", cx: size / 2, cy: size / 2, r, "stroke-width": strokeWidth }],
+      fillCircle,
+    ],
+  ]);
   const fill = el.querySelector(".ss-ring-fill");
   return { el, set: (fraction) => fill.setAttribute("stroke-dashoffset", String(c * (1 - fraction))) };
 }
@@ -195,7 +243,13 @@ export function createDownloadControl({ onDownload, onCancel, onCollapseChange }
   function update(progress) {
     const phase = progress.phase || "Preparing";
     const active = progress.active !== false && !["Complete", "Canceled", "Download failed"].includes(phase);
-    const mode = active ? "busy" : phase === "Complete" ? "done" : phase === "Download failed" ? "failed" : "idle";
+    const mode = active
+      ? "busy"
+      : phase === "Complete"
+        ? "done"
+        : phase === "Download failed"
+          ? "failed"
+          : "idle";
     const percent = Math.max(0, Math.min(100, Math.round(Number(progress.percent) || 0)));
     state = { ...progress, phase, mode, percent };
     render();

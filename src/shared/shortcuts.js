@@ -10,7 +10,13 @@ import { t } from "./i18n.js";
 
 // `group` is a stable id; `label` / groupLabel() are translated on use.
 function action(id, labelKey, group, params) {
-  return { id, group, get label() { return t(labelKey, params); } };
+  return {
+    id,
+    group,
+    get label() {
+      return t(labelKey, params);
+    },
+  };
 }
 
 export const ACTIONS = [
@@ -25,7 +31,9 @@ export const ACTIONS = [
   action("mute", "actionMute", "Volume"),
   action("fullscreen", "actionFullscreen", "View"),
   action("show_shortcuts", "actionShowShortcuts", "View"),
-  ...Array.from({ length: 10 }, (_, i) => action(`seek_${i * 10}`, "actionJump", "Jump", { percent: i * 10 })),
+  ...Array.from({ length: 10 }, (_, i) =>
+    action(`seek_${i * 10}`, "actionJump", "Jump", { percent: i * 10 }),
+  ),
 ];
 
 export function groupLabel(group) {
@@ -55,8 +63,17 @@ export const DEFAULT_SHORTCUTS = {
 };
 
 const IGNORED_KEYS = new Set([
-  "Control", "Shift", "Alt", "Meta", "AltGraph", "CapsLock", "NumLock",
-  "Dead", "Unidentified", "Process", "Compose",
+  "Control",
+  "Shift",
+  "Alt",
+  "Meta",
+  "AltGraph",
+  "CapsLock",
+  "NumLock",
+  "Dead",
+  "Unidentified",
+  "Process",
+  "Compose",
 ]);
 
 // Keys that can't be bound: they're needed to move around / cancel.
@@ -128,9 +145,18 @@ export function normalizeShortcuts(stored) {
 // Settings from SwiftSkip ≤ 3.2 stored only the keybinds that differed from
 // that version's defaults, one key per action (+ "_alt" for speed).
 const LEGACY_DEFAULTS = {
-  skip_forward: "ArrowRight", skip_backward: "ArrowLeft", volume_up: "ArrowUp",
-  volume_down: "ArrowDown", speed_up: "]", speed_down: "[", speed_up_alt: "$",
-  speed_down_alt: "^", pause_play: " ", mute: "m", reset_speed: "r", fullscreen: "f",
+  skip_forward: "ArrowRight",
+  skip_backward: "ArrowLeft",
+  volume_up: "ArrowUp",
+  volume_down: "ArrowDown",
+  speed_up: "]",
+  speed_down: "[",
+  speed_up_alt: "$",
+  speed_down_alt: "^",
+  pause_play: " ",
+  mute: "m",
+  reset_speed: "r",
+  fullscreen: "f",
 };
 const LEGACY_NAMES = { pause_play: "play_pause", reset_speed: "speed_reset" };
 
@@ -155,9 +181,18 @@ export function migrateLegacyKeybinds(legacy) {
 
 // For display: "Shift+ArrowRight" → ["Shift", "→"].
 const KEY_LABELS = {
-  ArrowLeft: "←", ArrowRight: "→", ArrowUp: "↑", ArrowDown: "↓",
-  Space: "Space", Escape: "Esc", PageUp: "Page Up", PageDown: "Page Down",
-  Ctrl: "Ctrl", Alt: "Alt", Shift: "Shift", Meta: "⌘",
+  ArrowLeft: "←",
+  ArrowRight: "→",
+  ArrowUp: "↑",
+  ArrowDown: "↓",
+  Space: "Space",
+  Escape: "Esc",
+  PageUp: "Page Up",
+  PageDown: "Page Down",
+  Ctrl: "Ctrl",
+  Alt: "Alt",
+  Shift: "Shift",
+  Meta: "⌘",
 };
 
 export function bindingParts(binding) {

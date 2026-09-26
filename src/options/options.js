@@ -59,10 +59,27 @@ function renderGeneral() {
     saveSettings(patch);
     render();
   };
-  radioGroup($("language-options"), LANGUAGE_OPTIONS, settings.language,
-    (l) => (l === "auto" ? t("languageAuto") : LANGUAGE_NAMES[l]), (language) => pick({ language }));
-  radioGroup($("skip-options"), SKIP_OPTIONS, settings.skipSeconds, (s) => `${s}s`, (skipSeconds) => pick({ skipSeconds }));
-  radioGroup($("step-options"), SPEED_STEP_OPTIONS, settings.speedStep, (s) => formatSpeed(s), (speedStep) => pick({ speedStep }));
+  radioGroup(
+    $("language-options"),
+    LANGUAGE_OPTIONS,
+    settings.language,
+    (l) => (l === "auto" ? t("languageAuto") : LANGUAGE_NAMES[l]),
+    (language) => pick({ language }),
+  );
+  radioGroup(
+    $("skip-options"),
+    SKIP_OPTIONS,
+    settings.skipSeconds,
+    (s) => `${s}s`,
+    (skipSeconds) => pick({ skipSeconds }),
+  );
+  radioGroup(
+    $("step-options"),
+    SPEED_STEP_OPTIONS,
+    settings.speedStep,
+    (s) => formatSpeed(s),
+    (speedStep) => pick({ speedStep }),
+  );
 }
 
 $("enabled").addEventListener("change", (e) => saveSettings({ enabled: e.target.checked }));
@@ -98,7 +115,10 @@ function bindingButton(actionId, binding, index) {
       button.append(el("kbd", null, part));
     });
     button.title = t("clickToChange");
-    button.setAttribute("aria-label", `${action(actionId).label}: ${t("bindingAria", { key: formatBinding(binding) })}`);
+    button.setAttribute(
+      "aria-label",
+      `${action(actionId).label}: ${t("bindingAria", { key: formatBinding(binding) })}`,
+    );
   }
   button.addEventListener("click", () => startRecording(actionId, index));
   return button;
@@ -138,7 +158,9 @@ function renderShortcuts() {
     const actions = ACTIONS.filter((a) => a.group === group);
     if (group === "Jump") {
       const details = el("details", "jump");
-      details.open = Boolean(recording && recording.actionId.startsWith("seek_")) || container.querySelector("details.jump")?.open;
+      details.open =
+        Boolean(recording && recording.actionId.startsWith("seek_")) ||
+        container.querySelector("details.jump")?.open;
       details.append(el("summary", null, t("jumpSummary")));
       actions.forEach((a) => details.append(shortcutRow(a)));
       nodes.push(el("h3", null, groupLabel(group)), details);
@@ -202,7 +224,11 @@ document.addEventListener(
       if (at === -1 || (action.id === actionId && at === index)) continue;
       list.splice(at, 1);
       if (action.id !== actionId) {
-        message = t("movedKey", { key: formatBinding(binding), from: action.label, to: actionLabel(actionId) });
+        message = t("movedKey", {
+          key: formatBinding(binding),
+          from: action.label,
+          to: actionLabel(actionId),
+        });
       }
     }
 

@@ -4,7 +4,9 @@ import { errorText, formatNumber, t } from "./i18n.js";
 
 export function formatBytesPerSecond(bytesPerSecond) {
   const mb = bytesPerSecond / 1e6;
-  return mb >= 1 ? `${formatNumber(Math.round(mb * 10) / 10, 1)} MB/s` : `${Math.round(bytesPerSecond / 1e3)} kB/s`;
+  return mb >= 1
+    ? `${formatNumber(Math.round(mb * 10) / 10, 1)} MB/s`
+    : `${Math.round(bytesPerSecond / 1e3)} kB/s`;
 }
 
 export function formatEta(seconds) {

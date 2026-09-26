@@ -4,7 +4,11 @@ import { isBuiltInSite, originPattern, patternHost, patternMatches } from "../sr
 
 test("built-in sites: Toledo, KU Leuven's Kaltura, Kaltura players anywhere", () => {
   assert.ok(isBuiltInSite("https://ultra.edu.kuleuven.cloud/ultra/courses/_1/lti/launchFrame"));
-  assert.ok(isBuiltInSite("https://kaltura-kaf.edu.kuleuven.cloud/browseandembed/index/media-redirect/entryid/1_x/show"));
+  assert.ok(
+    isBuiltInSite(
+      "https://kaltura-kaf.edu.kuleuven.cloud/browseandembed/index/media-redirect/entryid/1_x/show",
+    ),
+  );
   assert.ok(isBuiltInSite("https://www.kuleuven.be/"));
   assert.ok(isBuiltInSite("https://kuleuven.be/"));
   assert.ok(isBuiltInSite("https://cdnapisec.kaltura.com/p/1/embedPlaykitJs/uiconf_id/2"));

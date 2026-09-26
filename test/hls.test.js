@@ -10,7 +10,9 @@ import {
 const BASE = "https://cdn.example.com/p/1/playManifest/a.m3u8";
 
 test("parseAttributes handles quoted values containing commas", () => {
-  const attrs = parseAttributes('#EXT-X-STREAM-INF:BANDWIDTH=800000,CODECS="avc1.4d401f,mp4a.40.2",RESOLUTION=1280x720');
+  const attrs = parseAttributes(
+    '#EXT-X-STREAM-INF:BANDWIDTH=800000,CODECS="avc1.4d401f,mp4a.40.2",RESOLUTION=1280x720',
+  );
   assert.equal(attrs.BANDWIDTH, "800000");
   assert.equal(attrs.CODECS, "avc1.4d401f,mp4a.40.2");
   assert.equal(attrs.RESOLUTION, "1280x720");
@@ -58,7 +60,9 @@ test("parseMediaPlaylist rejects fragmented MP4 and empty playlists", () => {
 
 test("isLectureManifestUrl recognises Kaltura HLS manifests", () => {
   assert.ok(isLectureManifestUrl("https://x/index.M3U8?token=1"));
-  assert.ok(isLectureManifestUrl("https://cfvod.kaltura.com/p/1/playManifest/entryId/0_x/format/applehttp/a"));
+  assert.ok(
+    isLectureManifestUrl("https://cfvod.kaltura.com/p/1/playManifest/entryId/0_x/format/applehttp/a"),
+  );
   assert.ok(!isLectureManifestUrl("https://cfvod.kaltura.com/p/1/playManifest/entryId/0_x/format/url/a.mp4"));
   assert.ok(!isLectureManifestUrl(null));
 });

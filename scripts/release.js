@@ -29,7 +29,12 @@ const dryRun = args.includes("--dry-run");
 const version = args.find((a) => !a.startsWith("--"));
 
 const run = (cmd, cmdArgs, opts = {}) =>
-  execFileSync(cmd, cmdArgs, { cwd: ROOT, encoding: "utf8", stdio: opts.quiet ? "pipe" : "inherit", ...opts });
+  execFileSync(cmd, cmdArgs, {
+    cwd: ROOT,
+    encoding: "utf8",
+    stdio: opts.quiet ? "pipe" : "inherit",
+    ...opts,
+  });
 const git = (...a) => execFileSync("git", a, { cwd: ROOT, encoding: "utf8" }).trim();
 const step = (text) => console.log(`\n▸ ${text}`);
 function fail(message) {
@@ -45,7 +50,8 @@ step("Checking the repository");
 if (git("status", "--porcelain")) fail("Commit or stash your changes first.");
 if (git("rev-parse", "--abbrev-ref", "HEAD") !== "main") fail("Release from the main branch.");
 git("fetch", "--quiet", "origin");
-if (git("rev-parse", "HEAD") !== git("rev-parse", "origin/main")) fail("main differs from origin/main: pull/push first.");
+if (git("rev-parse", "HEAD") !== git("rev-parse", "origin/main"))
+  fail("main differs from origin/main: pull/push first.");
 if (git("tag", "--list", `v${version}`)) fail(`Tag v${version} already exists.`);
 
 const pkgPath = join(ROOT, "package.json");
@@ -62,7 +68,10 @@ if (published.some((v) => !newer(version, v))) fail(`${version} must be newer th
 if (version !== current && !newer(version, current)) fail(`${version} must be ≥ package.json's ${current}.`);
 
 const changelog = readFileSync(join(ROOT, "CHANGELOG.md"), "utf8");
-const section = new RegExp(`^## ${version.replace(/\./g, "\\.")}\\b.*$([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, "m").exec(changelog);
+const section = new RegExp(
+  `^## ${version.replace(/\./g, "\\.")}\\b.*$([\\s\\S]*?)(?=^## |(?![\\s\\S]))`,
+  "m",
+).exec(changelog);
 if (!section || !section[1].trim()) fail(`Add a "## ${version}" section to CHANGELOG.md first.`);
 const notes = section[1].trim();
 
@@ -83,7 +92,10 @@ run(process.execPath, ["scripts/build.js", "all", "--zip"]);
 const assets = join(ROOT, "web-ext-artifacts", "release");
 rmSync(assets, { recursive: true, force: true });
 mkdirSync(assets, { recursive: true });
-copyFileSync(join(ROOT, "web-ext-artifacts", `swiftskip-chrome-${version}.zip`), join(assets, "swiftskip-chrome.zip"));
+copyFileSync(
+  join(ROOT, "web-ext-artifacts", `swiftskip-chrome-${version}.zip`),
+  join(assets, "swiftskip-chrome.zip"),
+);
 
 if (dryRun) {
   if (version !== current) git("checkout", "--", "package.json", "package-lock.json");
@@ -118,8 +130,18 @@ writeFileSync(
   `${notes}\n\n---\n**Installeren / Install:** [Nederlands](https://github.com/${REPO}/blob/main/README_NL.md#installeren) · [English](https://github.com/${REPO}/blob/main/README_EN.md#installing)\n`,
 );
 run("gh", [
-  "release", "create", `v${version}`, xpi, join(assets, "swiftskip-chrome.zip"),
-  "--repo", REPO, "--title", `SwiftSkip ${version}`, "--notes-file", notesFile, "--latest",
+  "release",
+  "create",
+  `v${version}`,
+  xpi,
+  join(assets, "swiftskip-chrome.zip"),
+  "--repo",
+  REPO,
+  "--title",
+  `SwiftSkip ${version}`,
+  "--notes-file",
+  notesFile,
+  "--latest",
 ]);
 
 // ─── 5. Point Firefox updates at it ───────────────────────────────────────────
@@ -135,4 +157,6 @@ git("commit", "-q", "-m", `Firefox updates: ${version}`, "--", "updates.json");
 run("git", ["push", "--quiet", "origin", "main"]);
 
 console.log(`\n✔ SwiftSkip ${version} is out: https://github.com/${REPO}/releases/tag/v${version}`);
-console.log("  Firefox/Zen installs pick it up automatically (within a day, or via about:addons → ⚙ → Check for Updates).");
+console.log(
+  "  Firefox/Zen installs pick it up automatically (within a day, or via about:addons → ⚙ → Check for Updates).",
+);

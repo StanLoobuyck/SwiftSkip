@@ -21,12 +21,16 @@ test("sanitizeFilename collapses whitespace", () => {
 
 test("sanitizeFilename caps length at 100, at a word boundary when possible", () => {
   assert.equal(sanitizeFilename("x".repeat(250)).length, 100);
-  const long = "Digitale signaalverwerking - Les 1 (2026-09-23) - signaaltransformaties en frequentiebeschrijving deel twee";
+  const long =
+    "Digitale signaalverwerking - Les 1 (2026-09-23) - signaaltransformaties en frequentiebeschrijving deel twee";
   const result = sanitizeFilename(long);
   assert.ok(result.length <= 100);
   assert.ok(long.startsWith(result));
   assert.ok(!result.endsWith(" "));
-  assert.equal(result, "Digitale signaalverwerking - Les 1 (2026-09-23) - signaaltransformaties en frequentiebeschrijving");
+  assert.equal(
+    result,
+    "Digitale signaalverwerking - Les 1 (2026-09-23) - signaaltransformaties en frequentiebeschrijving",
+  );
 });
 
 test("sanitizeFilename falls back to 'lecture'", () => {

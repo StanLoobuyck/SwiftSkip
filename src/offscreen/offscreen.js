@@ -18,7 +18,11 @@ async function saveFile(url, title, extension) {
   });
 
   if (!response || !response.ok) {
-    throw new CodedError("errNotStarted", {}, response && response.error ? response.error : "Chrome did not start the download.");
+    throw new CodedError(
+      "errNotStarted",
+      {},
+      response && response.error ? response.error : "Chrome did not start the download.",
+    );
   }
   return response.downloadId;
 }

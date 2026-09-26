@@ -4,31 +4,73 @@
     <meta charset="utf-8" />
     <title>SwiftSkip test lecture</title>
     <style>
-      body { margin: 0; padding: 24px; background: #111; color: #ddd; font: 15px/1.5 system-ui, sans-serif; }
-      .player { position: relative; max-width: 960px; margin: 0 auto; background: #000; }
-      video { display: block; width: 100%; }
-      main { max-width: 960px; margin: 16px auto 0; }
-      code, kbd { background: #222; padding: 1px 6px; border-radius: 4px; }
-      #hls-status { color: #8c8; }
-      .crumbs { max-width: 960px; margin: 0 auto 12px; color: #999; }
-      .crumbs a { color: #9cf; }
-      #swiftskip-status { position: fixed; top: 0; left: 0; right: 0; margin: 0; padding: 10px 24px; background: #7a1f1f; color: #fff; }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #111;
+        color: #ddd;
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+      }
+      .player {
+        position: relative;
+        max-width: 960px;
+        margin: 0 auto;
+        background: #000;
+      }
+      video {
+        display: block;
+        width: 100%;
+      }
+      main {
+        max-width: 960px;
+        margin: 16px auto 0;
+      }
+      code,
+      kbd {
+        background: #222;
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+      #hls-status {
+        color: #8c8;
+      }
+      .crumbs {
+        max-width: 960px;
+        margin: 0 auto 12px;
+        color: #999;
+      }
+      .crumbs a {
+        color: #9cf;
+      }
+      #swiftskip-status {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: 10px 24px;
+        background: #7a1f1f;
+        color: #fff;
+      }
     </style>
   </head>
   <body>
     <!-- Mimics Toledo's breadcrumb; with ?toolTitle=… in the URL (like Toledo's
          LTI launch page) the download is named "<course> - <lecture>". -->
-    <nav class="crumbs"><a href="#">SwiftSkip Testvak [T01E5T] • ULTRA-TEST</a> › <a href="#">Lesopnames</a></nav>
+    <nav class="crumbs">
+      <a href="#">SwiftSkip Testvak [T01E5T] • ULTRA-TEST</a> › <a href="#">Lesopnames</a>
+    </nav>
     <!-- Class name contains "player" like Kaltura's, so SwiftSkip's player detection is exercised. -->
     <div class="kaltura-player player">
       <video src="media/lecture.mp4" controls playsinline></video>
     </div>
     <main>
       <p>
-        Local stand-in for a Toledo lecture (only the <strong>dev</strong> build runs here).
-        Click the page once, then try <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>
-        <kbd>Space</kbd> <kbd>K</kbd> <kbd>M</kbd> <kbd>F</kbd> <kbd>[</kbd> <kbd>]</kbd>
-        <kbd>R</kbd> <kbd>0</kbd>–<kbd>9</kbd>.
+        Local stand-in for a Toledo lecture (only the <strong>dev</strong> build runs here). Click the page
+        once, then try <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Space</kbd> <kbd>K</kbd>
+        <kbd>M</kbd> <kbd>F</kbd> <kbd>[</kbd> <kbd>]</kbd> <kbd>R</kbd> <kbd>0</kbd>–<kbd>9</kbd>.
       </p>
       <p>
         The page also requests an HLS playlist, like Kaltura does, so the
@@ -36,7 +78,11 @@
         <span id="hls-status">loading…</span>
       </p>
       <p><input placeholder="Typing here must NOT trigger shortcuts" size="40" /></p>
-      <p><a href="iframe.html?toolTitle=Les%202%20(2026-09-24)%3A%20iframe-test">Toledo-style page (player in an iframe) →</a></p>
+      <p>
+        <a href="iframe.html?toolTitle=Les%202%20(2026-09-24)%3A%20iframe-test"
+          >Toledo-style page (player in an iframe) →</a
+        >
+      </p>
     </main>
     <p id="swiftskip-status" hidden></p>
     <script>
@@ -53,14 +99,20 @@
           location.reload();
         } else {
           const status = document.getElementById("swiftskip-status");
-          status.textContent = "SwiftSkip (dev) is not active on this page. Is npm run dev:* running? Check the extension's errors.";
+          status.textContent =
+            "SwiftSkip (dev) is not active on this page. Is npm run dev:* running? Check the extension's errors.";
           status.hidden = false;
           sessionStorage.removeItem("swiftskipRetries");
         }
       }, 1500);
 
       fetch("media/hls/index.m3u8")
-        .then((r) => (document.getElementById("hls-status").textContent = r.ok ? "playlist requested ✔" : `HTTP ${r.status}`))
+        .then(
+          (r) =>
+            (document.getElementById("hls-status").textContent = r.ok
+              ? "playlist requested ✔"
+              : `HTTP ${r.status}`),
+        )
         .catch((e) => (document.getElementById("hls-status").textContent = e.message));
     </script>
   </body>

@@ -159,11 +159,17 @@ $("speed-up").addEventListener("click", () => stepSpeed("speed_up"));
 // ─── Skip interval ────────────────────────────────────────────────────────────
 
 function renderSkip() {
-  radioGroup($("skip-options"), SKIP_OPTIONS, settings.skipSeconds, (s) => `${s}s`, (seconds) => {
-    settings.skipSeconds = seconds;
-    saveSettings({ skipSeconds: seconds });
-    renderSkip();
-  });
+  radioGroup(
+    $("skip-options"),
+    SKIP_OPTIONS,
+    settings.skipSeconds,
+    (s) => `${s}s`,
+    (seconds) => {
+      settings.skipSeconds = seconds;
+      saveSettings({ skipSeconds: seconds });
+      renderSkip();
+    },
+  );
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────

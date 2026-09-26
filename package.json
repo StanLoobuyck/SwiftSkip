@@ -27,6 +27,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "esbuild": "^0.28.2",
+    "prettier": "^3.9.9",
     "web-ext": "^10.7.0"
   },
   "dependencies": {

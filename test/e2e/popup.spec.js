@@ -1,6 +1,10 @@
 import { test, expect, openLecture, openPopupFor, video } from "./fixtures.js";
 
-test("popup: shows the lecture, changes the speed, downloads", async ({ context, extensionId, serviceWorker }, testInfo) => {
+test("popup: shows the lecture, changes the speed, downloads", async ({
+  context,
+  extensionId,
+  serviceWorker,
+}, testInfo) => {
   const { page, frame } = await openLecture(context);
   const popup = await openPopupFor(context, extensionId, serviceWorker, page.url());
 
@@ -17,10 +21,16 @@ test("popup: shows the lecture, changes the speed, downloads", async ({ context,
   await expect(popup.locator("#done")).toBeVisible({ timeout: 30_000 });
 });
 
-test("popup on a site that isn't enabled offers 'Enable on …'", async ({ context, extensionId, serviceWorker }) => {
+test("popup on a site that isn't enabled offers 'Enable on …'", async ({
+  context,
+  extensionId,
+  serviceWorker,
+}) => {
   await openLecture(context); // any tab, for the popup to point at
   const popup = await openPopupFor(context, extensionId, serviceWorker, "http://localhost:8181/iframe.html");
-  await popup.goto(popup.url().replace(/url=[^&]+/, `url=${encodeURIComponent("https://example.edu/course")}`));
+  await popup.goto(
+    popup.url().replace(/url=[^&]+/, `url=${encodeURIComponent("https://example.edu/course")}`),
+  );
   await expect(popup.locator("#lecture-title")).toHaveText("SwiftSkip is off on this site");
   await expect(popup.locator("#site-enable")).toContainText("example.edu");
 });

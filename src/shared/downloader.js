@@ -26,10 +26,14 @@ function sleep(ms, signal) {
   return new Promise((resolve, reject) => {
     if (signal.aborted) return reject(abortError());
     const timer = setTimeout(resolve, ms);
-    signal.addEventListener("abort", () => {
-      clearTimeout(timer);
-      reject(abortError());
-    }, { once: true });
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(abortError());
+      },
+      { once: true },
+    );
   });
 }
 

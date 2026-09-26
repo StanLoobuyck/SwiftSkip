@@ -12,7 +12,9 @@ test("a shortcut pressed outside the player iframe controls the player", async (
   await expect(osdLabel(frame)).toHaveText("+10s");
 });
 
-test("skipping back at the start doesn't count up; near the start it shows the real distance", async ({ context }) => {
+test("skipping back at the start doesn't count up; near the start it shows the real distance", async ({
+  context,
+}) => {
   const { page, frame } = await openLecture(context);
   await focusOutsidePlayer(page);
 

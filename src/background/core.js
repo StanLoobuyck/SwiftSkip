@@ -47,20 +47,24 @@ const FINISHED_PHASES = ["Complete", "Canceled", "Download failed"];
 
 function publishDownloadState(state) {
   if (state.tabId && (state.active || FINISHED_PHASES.includes(state.phase))) {
-    ext.tabs.sendMessage(state.tabId, {
-      action: "lectureDownloadProgress",
-      ...state,
-    }).catch(() => {
-      /* Tab may have navigated away. */
-    });
+    ext.tabs
+      .sendMessage(state.tabId, {
+        action: "lectureDownloadProgress",
+        ...state,
+      })
+      .catch(() => {
+        /* Tab may have navigated away. */
+      });
   }
 
-  ext.runtime.sendMessage({
-    action: "lectureDownloadStateChanged",
-    state: { ...state },
-  }).catch(() => {
-    /* No popup listening. */
-  });
+  ext.runtime
+    .sendMessage({
+      action: "lectureDownloadStateChanged",
+      state: { ...state },
+    })
+    .catch(() => {
+      /* No popup listening. */
+    });
 }
 
 function setDownloadState(tabId, patch) {
@@ -156,7 +160,13 @@ async function startLectureDownload({ tabId, url, title, jobId }, runDownload) {
   }
 
   if (response && response.canceled) {
-    return setDownloadState(tabId, { active: false, phase: "Canceled", percent: 0, error: null, errorCode: null });
+    return setDownloadState(tabId, {
+      active: false,
+      phase: "Canceled",
+      percent: 0,
+      error: null,
+      errorCode: null,
+    });
   }
 
   if (!response || response.ok === false) {

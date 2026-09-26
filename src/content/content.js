@@ -122,9 +122,7 @@ import { createDownloadControl } from "./download-control.js";
     if (!vids.length) return null;
     return (
       vids.find((v) => !v.paused && !v.ended && v.readyState > 2) ||
-      vids.sort(
-        (a, b) => b.videoWidth * b.videoHeight - a.videoWidth * a.videoHeight,
-      )[0]
+      vids.sort((a, b) => b.videoWidth * b.videoHeight - a.videoWidth * a.videoHeight)[0]
     );
   }
 
@@ -314,7 +312,8 @@ import { createDownloadControl } from "./download-control.js";
   function setDownloadProgress(progress) {
     if (progress.jobId && activeDownloadJobId && progress.jobId !== activeDownloadJobId) return;
     if (!downloadControl) return;
-    if (progress.jobId && !activeDownloadJobId && progress.active !== false) activeDownloadJobId = progress.jobId;
+    if (progress.jobId && !activeDownloadJobId && progress.active !== false)
+      activeDownloadJobId = progress.jobId;
 
     clearTimeout(downloadResetTimer);
     placeDownloadControl();
@@ -395,7 +394,9 @@ import { createDownloadControl } from "./download-control.js";
     idleTimer = setTimeout(() => {
       const video = getVideo();
       const hideable =
-        video && !video.paused && downloadControl.mode === "idle" &&
+        video &&
+        !video.paused &&
+        downloadControl.mode === "idle" &&
         !downloadWrapEl.matches(":hover, :focus-within");
       if (hideable) downloadWrapEl.classList.add("is-idle");
     }, 3000);
@@ -470,7 +471,10 @@ import { createDownloadControl } from "./download-control.js";
   const svgParser = new DOMParser();
   function svgIcon(name) {
     return document.importNode(
-      svgParser.parseFromString(ICONS[name].replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '), "image/svg+xml").documentElement,
+      svgParser.parseFromString(
+        ICONS[name].replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '),
+        "image/svg+xml",
+      ).documentElement,
       true,
     );
   }
@@ -500,11 +504,7 @@ import { createDownloadControl } from "./download-control.js";
       barWrapEl.style.display = "none";
     }
 
-    if (
-      !isSameType ||
-      osdEl.style.display === "none" ||
-      osdEl.classList.contains("swiftskip-fade-out")
-    ) {
+    if (!isSameType || osdEl.style.display === "none" || osdEl.classList.contains("swiftskip-fade-out")) {
       osdEl.classList.remove("swiftskip-fade-out", "swiftskip-bump");
       void osdEl.offsetWidth; // force reflow for re-animation
       osdEl.classList.add("swiftskip-bump");
@@ -548,8 +548,7 @@ import { createDownloadControl } from "./download-control.js";
     if (v.muted) v.muted = false;
     v.volume = Math.max(0, Math.min(1, v.volume + delta));
     const pct = Math.round(v.volume * 100);
-    const icon =
-      v.volume === 0 ? "vol_zero" : v.volume < 0.5 ? "vol_low" : "vol_high";
+    const icon = v.volume === 0 ? "vol_zero" : v.volume < 0.5 ? "vol_low" : "vol_high";
     showOSD("volume", icon, `${pct}%`, v.volume);
   }
 
@@ -583,12 +582,7 @@ import { createDownloadControl } from "./download-control.js";
     let playBtn = null;
     const btns = container.querySelectorAll('button, [role="button"]');
     for (const b of btns) {
-      const label = (
-        b.title ||
-        b.getAttribute("aria-label") ||
-        b.className ||
-        ""
-      ).toLowerCase();
+      const label = (b.title || b.getAttribute("aria-label") || b.className || "").toLowerCase();
       if (label.includes("play") || label.includes("pause")) {
         playBtn = b;
         break;
@@ -613,12 +607,7 @@ import { createDownloadControl } from "./download-control.js";
     if (v.muted) {
       showOSD("mute", "mute", t("muted"), 0);
     } else {
-      showOSD(
-        "volume",
-        v.volume < 0.5 ? "vol_low" : "vol_high",
-        `${Math.round(v.volume * 100)}%`,
-        v.volume,
-      );
+      showOSD("volume", v.volume < 0.5 ? "vol_low" : "vol_high", `${Math.round(v.volume * 100)}%`, v.volume);
     }
   }
 
@@ -632,17 +621,10 @@ import { createDownloadControl } from "./download-control.js";
   function getPlayerContainer(v) {
     let curr = v;
     let best = (v.getRootNode && v.getRootNode().host) || v.parentElement || v;
-    while (
-      curr &&
-      curr !== document.body &&
-      curr !== document.documentElement
-    ) {
+    while (curr && curr !== document.body && curr !== document.documentElement) {
       if (curr.nodeType === 1) {
         const tag = curr.tagName.toLowerCase();
-        const cls =
-          typeof curr.className === "string"
-            ? curr.className.toLowerCase()
-            : "";
+        const cls = typeof curr.className === "string" ? curr.className.toLowerCase() : "";
         const id = typeof curr.id === "string" ? curr.id.toLowerCase() : "";
         if (
           tag.includes("player") ||
@@ -673,18 +655,9 @@ import { createDownloadControl } from "./download-control.js";
     let exitBtn = null;
     const btns = container.querySelectorAll('button, [role="button"]');
     for (const b of btns) {
-      const label = (
-        b.title ||
-        b.getAttribute("aria-label") ||
-        b.className ||
-        ""
-      ).toLowerCase();
+      const label = (b.title || b.getAttribute("aria-label") || b.className || "").toLowerCase();
       if (label.includes("fullscreen") || label.includes("full screen")) {
-        if (
-          label.includes("exit") ||
-          label.includes("close") ||
-          label.includes("compress")
-        ) {
+        if (label.includes("exit") || label.includes("close") || label.includes("compress")) {
           exitBtn = b;
         } else {
           fsBtn = b;
@@ -697,8 +670,7 @@ import { createDownloadControl } from "./download-control.js";
         fsBtn.click();
         return;
       }
-      const req =
-        container.requestFullscreen || container.webkitRequestFullscreen;
+      const req = container.requestFullscreen || container.webkitRequestFullscreen;
       if (req) req.call(container);
     } else {
       if (exitBtn) {
@@ -719,17 +691,39 @@ import { createDownloadControl } from "./download-control.js";
   function runAction(id) {
     if (!getVideo()) return false;
     switch (id) {
-      case "play_pause": togglePause(); break;
-      case "skip_backward": skip(-settings.skipSeconds); break;
-      case "skip_forward": skip(settings.skipSeconds); break;
-      case "speed_down": changeSpeed(-1); break;
-      case "speed_up": changeSpeed(1); break;
-      case "speed_reset": resetSpeed(); break;
-      case "volume_down": changeVolume(-0.05); break;
-      case "volume_up": changeVolume(0.05); break;
-      case "mute": toggleMute(); break;
-      case "fullscreen": toggleFullscreen(); break;
-      case "show_shortcuts": toggleShortcutSheet(); break;
+      case "play_pause":
+        togglePause();
+        break;
+      case "skip_backward":
+        skip(-settings.skipSeconds);
+        break;
+      case "skip_forward":
+        skip(settings.skipSeconds);
+        break;
+      case "speed_down":
+        changeSpeed(-1);
+        break;
+      case "speed_up":
+        changeSpeed(1);
+        break;
+      case "speed_reset":
+        resetSpeed();
+        break;
+      case "volume_down":
+        changeVolume(-0.05);
+        break;
+      case "volume_up":
+        changeVolume(0.05);
+        break;
+      case "mute":
+        toggleMute();
+        break;
+      case "fullscreen":
+        toggleFullscreen();
+        break;
+      case "show_shortcuts":
+        toggleShortcutSheet();
+        break;
       default: {
         const seek = /^seek_(\d0?)$/.exec(id || "");
         if (!seek) return false;
@@ -754,7 +748,17 @@ import { createDownloadControl } from "./download-control.js";
 
   // Typing in a text field must never trigger shortcuts. composedPath()[0] sees
   // through shadow DOM (event.target is retargeted to the shadow host).
-  const NON_TEXT_INPUTS = new Set(["button", "checkbox", "radio", "range", "submit", "reset", "color", "file", "image"]);
+  const NON_TEXT_INPUTS = new Set([
+    "button",
+    "checkbox",
+    "radio",
+    "range",
+    "submit",
+    "reset",
+    "color",
+    "file",
+    "image",
+  ]);
   function isTypingTarget(target) {
     if (!target || target.nodeType !== 1) return false;
     if (target.isContentEditable) return true;
@@ -821,7 +825,7 @@ import { createDownloadControl } from "./download-control.js";
   }
 
   function isAncestor(win) {
-    for (let w = window; w !== window.top; ) {
+    for (let w = window; w !== window.top;) {
       w = w.parent;
       if (w === win) return true;
     }
@@ -829,7 +833,7 @@ import { createDownloadControl } from "./download-control.js";
   }
 
   function announcePlayer() {
-    for (let w = window; w !== window.top; ) {
+    for (let w = window; w !== window.top;) {
       w = w.parent;
       w.postMessage({ [RELAY]: "player" }, "*");
     }
@@ -895,7 +899,11 @@ import { createDownloadControl } from "./download-control.js";
     v.addEventListener("playing", async () => {
       if (started || !settings.enabled) return;
       started = true;
-      key = resumeKey({ pageUrl: window.location.href, manifestUrl: detectedLectureUrl, duration: v.duration });
+      key = resumeKey({
+        pageUrl: window.location.href,
+        manifestUrl: detectedLectureUrl,
+        duration: v.duration,
+      });
 
       if (settings.rememberSpeed && settings.preferredSpeed !== 1 && Math.abs(v.playbackRate - 1) < 0.01) {
         v.playbackRate = settings.preferredSpeed;

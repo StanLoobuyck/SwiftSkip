@@ -24,7 +24,9 @@
 
   --radius: 10px;
   --radius-sm: 7px;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Inter, Roboto, "Helvetica Neue", Arial,
+    sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -103,7 +105,9 @@ svg.icon {
   background: var(--surface);
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .btn:hover:not(:disabled) {

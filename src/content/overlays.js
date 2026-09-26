@@ -59,9 +59,11 @@ export function openShortcutSheet({ parent, place, shortcuts, skipSeconds }) {
       if (!bindings.length) continue;
       const row = el("div", "swiftskip-sheet-row");
       const label =
-        action.id === "skip_forward" ? t("forwardSeconds", { s: skipSeconds })
-        : action.id === "skip_backward" ? t("backSeconds", { s: skipSeconds })
-        : action.label;
+        action.id === "skip_forward"
+          ? t("forwardSeconds", { s: skipSeconds })
+          : action.id === "skip_backward"
+            ? t("backSeconds", { s: skipSeconds })
+            : action.label;
       row.append(el("span", "swiftskip-sheet-label", label));
       const keys = el("span", "swiftskip-sheet-bindings");
       bindings.forEach((b) => keys.append(keyChips(b)));

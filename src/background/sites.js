@@ -27,7 +27,15 @@ export async function syncSiteScripts() {
   if (registered.length) await ext.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] });
   if (!sites.length) return;
   await ext.scripting.registerContentScripts([
-    { id: SCRIPT_ID, matches: sites, js: JS, css: CSS, allFrames: true, runAt: "document_idle", persistAcrossSessions: true },
+    {
+      id: SCRIPT_ID,
+      matches: sites,
+      js: JS,
+      css: CSS,
+      allFrames: true,
+      runAt: "document_idle",
+      persistAcrossSessions: true,
+    },
   ]);
 }
 

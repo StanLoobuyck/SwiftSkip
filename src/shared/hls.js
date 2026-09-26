@@ -47,20 +47,20 @@ export function chooseBestVariant(manifestText, manifestUrl) {
 export function parseMediaPlaylist(manifestText, manifestUrl) {
   const lines = getLines(manifestText);
 
-  const encrypted = lines.some(
-    (line) => line.startsWith("#EXT-X-KEY") && !/METHOD=NONE/i.test(line),
-  );
+  const encrypted = lines.some((line) => line.startsWith("#EXT-X-KEY") && !/METHOD=NONE/i.test(line));
   if (encrypted) {
-    throw new CodedError("errEncrypted", {}, "Encrypted HLS streams are not supported by the in-browser remuxer.");
+    throw new CodedError(
+      "errEncrypted",
+      {},
+      "Encrypted HLS streams are not supported by the in-browser remuxer.",
+    );
   }
 
   if (lines.some((line) => line.startsWith("#EXT-X-MAP"))) {
     throw new CodedError("errFmp4", {}, "Fragmented MP4 HLS streams are not supported by the TS downloader.");
   }
 
-  const segments = lines
-    .filter((line) => !line.startsWith("#"))
-    .map((line) => resolveUrl(manifestUrl, line));
+  const segments = lines.filter((line) => !line.startsWith("#")).map((line) => resolveUrl(manifestUrl, line));
 
   if (!segments.length) {
     throw new CodedError("errNoSegments", {}, "No media segments were found in the HLS playlist.");
@@ -74,7 +74,6 @@ export function isLectureManifestUrl(url) {
   const lowerUrl = url.toLowerCase();
 
   return (
-    lowerUrl.includes(".m3u8") ||
-    (lowerUrl.includes("playmanifest") && lowerUrl.includes("format/applehttp"))
+    lowerUrl.includes(".m3u8") || (lowerUrl.includes("playmanifest") && lowerUrl.includes("format/applehttp"))
   );
 }

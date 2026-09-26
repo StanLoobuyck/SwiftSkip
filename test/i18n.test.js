@@ -1,15 +1,31 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { LANGUAGES, errorText, formatNumber, phaseLabel, resolveLanguage, setLanguage, t } from "../src/shared/i18n.js";
+import {
+  LANGUAGES,
+  errorText,
+  formatNumber,
+  phaseLabel,
+  resolveLanguage,
+  setLanguage,
+  t,
+} from "../src/shared/i18n.js";
 
 const placeholders = (text) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
 test("English and Dutch have exactly the same keys", () => {
   const en = Object.keys(LANGUAGES.en).sort();
   const nl = Object.keys(LANGUAGES.nl).sort();
-  assert.deepEqual(nl.filter((k) => !en.includes(k)), [], "only in nl");
-  assert.deepEqual(en.filter((k) => !nl.includes(k)), [], "missing in nl");
+  assert.deepEqual(
+    nl.filter((k) => !en.includes(k)),
+    [],
+    "only in nl",
+  );
+  assert.deepEqual(
+    en.filter((k) => !nl.includes(k)),
+    [],
+    "missing in nl",
+  );
 });
 
 test("…with the same {placeholders}, and no empty texts", () => {
@@ -22,9 +38,17 @@ test("…with the same {placeholders}, and no empty texts", () => {
 
 test("every key used in the code exists", () => {
   const files = [
-    "src/popup/popup.js", "src/popup/popup.html", "src/options/options.js", "src/options/options.html",
-    "src/welcome/welcome.js", "src/welcome/welcome.html", "src/content/content.js", "src/content/overlays.js",
-    "src/shared/format.js", "src/shared/shortcuts.js", "src/shared/i18n.js",
+    "src/popup/popup.js",
+    "src/popup/popup.html",
+    "src/options/options.js",
+    "src/options/options.html",
+    "src/welcome/welcome.js",
+    "src/welcome/welcome.html",
+    "src/content/content.js",
+    "src/content/overlays.js",
+    "src/shared/format.js",
+    "src/shared/shortcuts.js",
+    "src/shared/i18n.js",
   ];
   const used = new Set();
   for (const file of files) {
@@ -33,7 +57,8 @@ test("every key used in the code exists", () => {
     for (const m of source.matchAll(/data-i18n(?:-title|-aria-label)?="(\w+)"/g)) used.add(m[1]);
     for (const m of source.matchAll(/errorCode: "(\w+)"/g)) used.add(m[1]);
   }
-  for (const m of readFileSync("src/shared/shortcuts.js", "utf8").matchAll(/action\("\w+", "(\w+)"/g)) used.add(m[1]);
+  for (const m of readFileSync("src/shared/shortcuts.js", "utf8").matchAll(/action\("\w+", "(\w+)"/g))
+    used.add(m[1]);
   for (const m of readFileSync("src/shared/i18n.js", "utf8").matchAll(/: "(phase\w+)"/g)) used.add(m[1]);
   for (const file of ["src/shared/hls.js", "src/shared/downloader.js", "src/offscreen/offscreen.js"]) {
     for (const m of readFileSync(file, "utf8").matchAll(/"(err[A-Z]\w+)"/g)) used.add(m[1]);
@@ -68,7 +93,11 @@ test("numbers, phases and errors follow the language", () => {
   assert.equal(formatNumber(1.5), "1,5");
   assert.equal(phaseLabel("Converting to MP4"), "Omzetten naar MP4");
   assert.equal(
-    errorText({ error: "Could not fetch segment 3/80 (HTTP 403).", errorCode: "errFetchSegment", errorParams: { n: 3, total: 80, status: 403 } }),
+    errorText({
+      error: "Could not fetch segment 3/80 (HTTP 403).",
+      errorCode: "errFetchSegment",
+      errorParams: { n: 3, total: 80, status: 403 },
+    }),
     "Kon deel 3/80 niet ophalen (HTTP 403).",
   );
   setLanguage("en");

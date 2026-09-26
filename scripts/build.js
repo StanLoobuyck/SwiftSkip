@@ -58,9 +58,7 @@ async function buildTarget(target) {
   if (target === "chrome") entries.offscreen = "offscreen/offscreen.js";
 
   await esbuild.build({
-    entryPoints: Object.fromEntries(
-      Object.entries(entries).map(([name, file]) => [name, join(SRC, file)]),
-    ),
+    entryPoints: Object.fromEntries(Object.entries(entries).map(([name, file]) => [name, join(SRC, file)])),
     outdir: out,
     bundle: true,
     format: "iife",
@@ -116,9 +114,7 @@ async function buildAll() {
   try {
     for (const target of targets) await buildTarget(target);
     firstBuild = false;
-    console.log(
-      `✔ built ${targets.join(", ")}${dev ? " (dev)" : ""} in ${Date.now() - started} ms`,
-    );
+    console.log(`✔ built ${targets.join(", ")}${dev ? " (dev)" : ""} in ${Date.now() - started} ms`);
   } catch (error) {
     console.error(`✘ build failed: ${error.message}`);
     if (!watching) process.exit(1);

@@ -89,12 +89,22 @@ test("isResumable skips the first and last 30 s", () => {
 
 test("resumeKey prefers Kaltura's entry id", () => {
   assert.equal(
-    resumeKey({ pageUrl: "https://kaltura-kaf.edu.kuleuven.cloud/browseandembed/index/media-redirect/entryid/1_u30ck2k0/show", duration: 6821 }),
+    resumeKey({
+      pageUrl:
+        "https://kaltura-kaf.edu.kuleuven.cloud/browseandembed/index/media-redirect/entryid/1_u30ck2k0/show",
+      duration: 6821,
+    }),
     "kaltura:1_u30ck2k0",
   );
   assert.equal(
-    resumeKey({ pageUrl: "https://x.example/player", manifestUrl: "https://cdn/p/1/playManifest/entryId/0_AbC123/format/applehttp/a.m3u8" }),
+    resumeKey({
+      pageUrl: "https://x.example/player",
+      manifestUrl: "https://cdn/p/1/playManifest/entryId/0_AbC123/format/applehttp/a.m3u8",
+    }),
     "kaltura:0_abc123",
   );
-  assert.equal(resumeKey({ pageUrl: "http://localhost:8123/?toolTitle=x", duration: 120.08 }), "page:localhost:8123/:120");
+  assert.equal(
+    resumeKey({ pageUrl: "http://localhost:8123/?toolTitle=x", duration: 120.08 }),
+    "page:localhost:8123/:120",
+  );
 });

@@ -71,7 +71,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     const signed = await signFirefox();
     console.log(`\n✔ Signed: ${signed}`);
-    console.log("Install it by dragging the .xpi into Firefox/Zen (or about:addons → ⚙ → Install Add-on From File).");
+    console.log(
+      "Install it by dragging the .xpi into Firefox/Zen (or about:addons → ⚙ → Install Add-on From File).",
+    );
   } catch (error) {
     console.error(error.message);
     process.exit(1);

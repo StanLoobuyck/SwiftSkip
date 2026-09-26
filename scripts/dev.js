@@ -88,12 +88,19 @@ const server = createServer((req, res) => {
   }
 
   const size = statSync(file).size;
-  const headers = { "Content-Type": TYPES[extname(file)] || "application/octet-stream", "Accept-Ranges": "bytes" };
+  const headers = {
+    "Content-Type": TYPES[extname(file)] || "application/octet-stream",
+    "Accept-Ranges": "bytes",
+  };
   const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range || "");
   if (range) {
     const start = range[1] ? Number(range[1]) : size - Number(range[2]);
     const end = range[1] && range[2] ? Number(range[2]) : size - 1;
-    res.writeHead(206, { ...headers, "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": end - start + 1 });
+    res.writeHead(206, {
+      ...headers,
+      "Content-Range": `bytes ${start}-${end}/${size}`,
+      "Content-Length": end - start + 1,
+    });
     createReadStream(file, { start, end }).pipe(res);
   } else {
     res.writeHead(200, { ...headers, "Content-Length": size });
@@ -157,8 +164,10 @@ mkdirSync(dirname(profile), { recursive: true });
 const webExt = join(ROOT, "node_modules", ".bin", "web-ext");
 const common = [
   "run",
-  "--start-url", `http://localhost:${port}/?toolTitle=${encodeURIComponent("Les 1 (2026-09-23): testopname")}`,
-  "--source-dir", join(ROOT, "dist", target),
+  "--start-url",
+  `http://localhost:${port}/?toolTitle=${encodeURIComponent("Les 1 (2026-09-23): testopname")}`,
+  "--source-dir",
+  join(ROOT, "dist", target),
   "--profile-create-if-missing",
   "--keep-profile-changes",
 ];
@@ -167,5 +176,13 @@ console.log(`Launching ${binary} …`);
 if (target === "firefox") {
   run(webExt, [...common, "--target", "firefox-desktop", "--firefox", binary, "--firefox-profile", profile]);
 } else {
-  run(webExt, [...common, "--target", "chromium", "--chromium-binary", binary, "--chromium-profile", profile]);
+  run(webExt, [
+    ...common,
+    "--target",
+    "chromium",
+    "--chromium-binary",
+    binary,
+    "--chromium-profile",
+    profile,
+  ]);
 }

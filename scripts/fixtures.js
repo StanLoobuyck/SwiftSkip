@@ -16,17 +16,30 @@ export function fixturesExist() {
 export function generateFixtures() {
   mkdirSync(join(MEDIA, "hls"), { recursive: true });
   const input = [
-    "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=25:duration=120",
-    "-f", "lavfi", "-i", "sine=frequency=440:duration=120",
+    "-f",
+    "lavfi",
+    "-i",
+    "testsrc2=size=640x360:rate=25:duration=120",
+    "-f",
+    "lavfi",
+    "-i",
+    "sine=frequency=440:duration=120",
   ];
   const encode = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "30", "-c:a", "aac", "-b:a", "64k"];
   const run = (args) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...args], { stdio: "inherit" });
 
   run([...input, ...encode, "-movflags", "+faststart", join(MEDIA, "lecture.mp4")]);
   run([
-    ...input, ...encode,
-    "-f", "hls", "-hls_time", "6", "-hls_playlist_type", "vod",
-    "-hls_segment_filename", join(MEDIA, "hls", "seg%03d.ts"),
+    ...input,
+    ...encode,
+    "-f",
+    "hls",
+    "-hls_time",
+    "6",
+    "-hls_playlist_type",
+    "vod",
+    "-hls_segment_filename",
+    join(MEDIA, "hls", "seg%03d.ts"),
     join(MEDIA, "hls", "index.m3u8"),
   ]);
 }

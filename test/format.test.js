@@ -27,7 +27,11 @@ test("formatProgressMeta shows speed and time left only while downloading", () =
 
 test("formatProgressMeta shows the error when there is one", () => {
   assert.equal(
-    formatProgressMeta({ phase: "Download failed", percent: 30, error: "Could not fetch segment 3/80 (HTTP 403)." }),
+    formatProgressMeta({
+      phase: "Download failed",
+      percent: 30,
+      error: "Could not fetch segment 3/80 (HTTP 403).",
+    }),
     "Could not fetch segment 3/80 (HTTP 403).",
   );
 });

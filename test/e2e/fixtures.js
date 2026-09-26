@@ -45,7 +45,10 @@ export { expect };
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 // The Toledo-style page: player in an iframe, breadcrumb + toolTitle around it.
-export async function openLecture(context, { slow = false, host = "localhost:8181", title = "Les 2 (2026-09-24): e2e" } = {}) {
+export async function openLecture(
+  context,
+  { slow = false, host = "localhost:8181", title = "Les 2 (2026-09-24): e2e" } = {},
+) {
   const page = await context.newPage();
   await page.goto(`http://${host}${slow ? "/slow" : ""}/iframe.html?toolTitle=${encodeURIComponent(title)}`);
   const frame = await playerFrame(page);
@@ -80,7 +83,13 @@ export const video = {
         }),
       t,
     ),
-  play: (frame) => frame.evaluate(() => document.querySelector("video").play().then(() => true)),
+  play: (frame) =>
+    frame.evaluate(() =>
+      document
+        .querySelector("video")
+        .play()
+        .then(() => true),
+    ),
   pause: (frame) => frame.evaluate(() => document.querySelector("video").pause()),
 };
 
@@ -98,6 +107,8 @@ export async function openPopupFor(context, extensionId, serviceWorker, url) {
   );
   const popup = await context.newPage();
   await popup.setViewportSize({ width: 300, height: 420 });
-  await popup.goto(`chrome-extension://${extensionId}/popup.html?tab=${tabId}&url=${encodeURIComponent(url)}`);
+  await popup.goto(
+    `chrome-extension://${extensionId}/popup.html?tab=${tabId}&url=${encodeURIComponent(url)}`,
+  );
   return popup;
 }

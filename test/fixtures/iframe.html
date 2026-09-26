@@ -4,18 +4,46 @@
     <meta charset="utf-8" />
     <title>LTI openen</title>
     <style>
-      body { margin: 0; padding: 24px; background: #111; color: #ddd; font: 15px/1.5 system-ui, sans-serif; }
-      .crumbs { max-width: 960px; margin: 0 auto 12px; color: #999; }
-      .crumbs a { color: #9cf; }
-      iframe { display: block; width: 100%; max-width: 960px; aspect-ratio: 16 / 9; margin: 0 auto; border: 0; }
-      p { max-width: 960px; margin: 16px auto; }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #111;
+        color: #ddd;
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+      }
+      .crumbs {
+        max-width: 960px;
+        margin: 0 auto 12px;
+        color: #999;
+      }
+      .crumbs a {
+        color: #9cf;
+      }
+      iframe {
+        display: block;
+        width: 100%;
+        max-width: 960px;
+        aspect-ratio: 16 / 9;
+        margin: 0 auto;
+        border: 0;
+      }
+      p {
+        max-width: 960px;
+        margin: 16px auto;
+      }
     </style>
   </head>
   <body>
     <!-- Like Toledo: the player is an iframe inside the course page. Click on
          this text (outside the player) and the shortcuts should still work. -->
-    <nav class="crumbs"><a href="#">SwiftSkip Testvak [T01E5T] • ULTRA-TEST</a> › <a href="#">Lesopnames</a></nav>
+    <nav class="crumbs">
+      <a href="#">SwiftSkip Testvak [T01E5T] • ULTRA-TEST</a> › <a href="#">Lesopnames</a>
+    </nav>
     <iframe src="player.html" allow="fullscreen" title="Player"></iframe>
-    <p>Toledo-style layout: the player is an iframe. Click here (outside the player), then use the shortcuts.</p>
+    <p>
+      Toledo-style layout: the player is an iframe. Click here (outside the player), then use the shortcuts.
+    </p>
   </body>
 </html>

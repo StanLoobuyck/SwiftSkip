@@ -11,7 +11,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 export default function globalSetup() {
   if (!fixturesExist()) generateFixtures();
-  const build = (...args) => execFileSync(process.execPath, ["scripts/build.js", "chrome", ...args], { cwd: ROOT, stdio: "inherit" });
+  const build = (...args) =>
+    execFileSync(process.execPath, ["scripts/build.js", "chrome", ...args], { cwd: ROOT, stdio: "inherit" });
   build("--dev", "--no-dev-reload", "--out", "dist-e2e/dev");
   build("--out", "dist-e2e/release");
 }

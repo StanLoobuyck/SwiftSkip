@@ -36,18 +36,30 @@ test("no build asks for all websites up front; other sites are optional", () => 
     const m = buildManifest(target, opts);
     const upfront = [...m.permissions, ...(m.host_permissions || [])];
     assert.ok(!upfront.includes("<all_urls>") && !upfront.includes("*://*/*"), target);
-    assert.deepEqual(m.content_scripts[0].matches, ["*://*.kuleuven.be/*", "*://*.kuleuven.cloud/*", "*://*.kaltura.com/*"]);
+    assert.deepEqual(m.content_scripts[0].matches, [
+      "*://*.kuleuven.be/*",
+      "*://*.kuleuven.cloud/*",
+      "*://*.kaltura.com/*",
+    ]);
     assert.deepEqual(m.optional_permissions || m.optional_host_permissions, ["*://*/*"]);
   }
 });
 
 test("only dev builds run on localhost", () => {
-  assert.ok(buildManifest("chrome", { ...opts, dev: true }).content_scripts[0].matches.includes("http://localhost/*"));
+  assert.ok(
+    buildManifest("chrome", { ...opts, dev: true }).content_scripts[0].matches.includes("http://localhost/*"),
+  );
   assert.ok(!buildManifest("chrome", opts).content_scripts[0].matches.includes("http://localhost/*"));
 });
 
 test("release Firefox builds point to the self-hosted update manifest; dev builds don't", () => {
   const release = buildManifest("firefox", opts).browser_specific_settings.gecko;
-  assert.equal(release.update_url, "https://raw.githubusercontent.com/StanLoobuyck/SwiftSkip/main/updates.json");
-  assert.equal(buildManifest("firefox", { ...opts, dev: true }).browser_specific_settings.gecko.update_url, undefined);
+  assert.equal(
+    release.update_url,
+    "https://raw.githubusercontent.com/StanLoobuyck/SwiftSkip/main/updates.json",
+  );
+  assert.equal(
+    buildManifest("firefox", { ...opts, dev: true }).browser_specific_settings.gecko.update_url,
+    undefined,
+  );
 });

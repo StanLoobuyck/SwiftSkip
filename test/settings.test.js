@@ -16,7 +16,13 @@ test("invalid values fall back to defaults", () => {
 });
 
 test("valid values are kept", () => {
-  const s = normalizeSettings({ skipSeconds: 30, speedStep: 0.1, enabled: false, preferredSpeed: 1.75, resumePlayback: false });
+  const s = normalizeSettings({
+    skipSeconds: 30,
+    speedStep: 0.1,
+    enabled: false,
+    preferredSpeed: 1.75,
+    resumePlayback: false,
+  });
   assert.equal(s.skipSeconds, 30);
   assert.equal(s.speedStep, 0.1);
   assert.equal(s.enabled, false);

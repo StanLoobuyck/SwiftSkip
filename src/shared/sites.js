@@ -3,11 +3,7 @@
 // Always on, granted at install: Toledo, KU Leuven's Kaltura (KAF) and
 // Kaltura's own players/CDN — the latter also covers other schools that embed
 // Kaltura in their learning platform.
-export const REQUIRED_HOSTS = [
-  "*://*.kuleuven.be/*",
-  "*://*.kuleuven.cloud/*",
-  "*://*.kaltura.com/*",
-];
+export const REQUIRED_HOSTS = ["*://*.kuleuven.be/*", "*://*.kuleuven.cloud/*", "*://*.kaltura.com/*"];
 
 // Anything else is opt-in, one site at a time, from the popup.
 export const OPTIONAL_HOSTS = ["*://*/*"];

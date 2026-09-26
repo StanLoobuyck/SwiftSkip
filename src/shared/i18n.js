@@ -18,7 +18,11 @@ let current = "en";
 // "auto" follows the browser's language; anything not Dutch gets English.
 export function resolveLanguage(preference, browserLanguage) {
   if (preference === "en" || preference === "nl") return preference;
-  return String(browserLanguage || "").toLowerCase().startsWith("nl") ? "nl" : "en";
+  return String(browserLanguage || "")
+    .toLowerCase()
+    .startsWith("nl")
+    ? "nl"
+    : "en";
 }
 
 function browserLanguage() {
@@ -37,9 +41,9 @@ export function getLanguage() {
 }
 
 export function t(key, params = {}) {
-  const pluralKey = typeof params.count === "number" ? `${key}_${params.count === 1 ? "one" : "other"}` : null;
-  const text =
-    (pluralKey && (messages[pluralKey] ?? en[pluralKey])) ?? messages[key] ?? en[key] ?? key;
+  const pluralKey =
+    typeof params.count === "number" ? `${key}_${params.count === 1 ? "one" : "other"}` : null;
+  const text = (pluralKey && (messages[pluralKey] ?? en[pluralKey])) ?? messages[key] ?? en[key] ?? key;
   return text.replace(/\{(\w+)\}/g, (match, name) => (name in params ? String(params[name]) : match));
 }
 

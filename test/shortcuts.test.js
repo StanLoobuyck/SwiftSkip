@@ -13,7 +13,10 @@ import {
 } from "../src/shared/shortcuts.js";
 
 // Minimal KeyboardEvent stand-in.
-const key = (k, { code = "", ctrl = false, alt = false, shift = false, meta = false, altGraph = false } = {}) => ({
+const key = (
+  k,
+  { code = "", ctrl = false, alt = false, shift = false, meta = false, altGraph = false } = {},
+) => ({
   key: k,
   code,
   ctrlKey: ctrl,
@@ -76,7 +79,12 @@ test("AZERTY: the number row works without Shift", () => {
 });
 
 test("normalizeShortcuts fills in missing actions and drops junk", () => {
-  const result = normalizeShortcuts({ mute: ["x", "y", "z"], skip_forward: [], bogus: ["q"], fullscreen: "f" });
+  const result = normalizeShortcuts({
+    mute: ["x", "y", "z"],
+    skip_forward: [],
+    bogus: ["q"],
+    fullscreen: "f",
+  });
   assert.deepEqual(Object.keys(result), ACTION_IDS);
   assert.deepEqual(result.mute, ["x", "y"], "max 2 keys per action");
   assert.deepEqual(result.skip_forward, [], "explicitly cleared stays cleared");

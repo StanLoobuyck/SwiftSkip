@@ -19,7 +19,8 @@
   --ss-accent: #6ea8ff;
   --ss-success: #6fdc8c;
   --ss-danger: #ff8a80;
-  --ss-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
+  --ss-font:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
 
   font-family: var(--ss-font);
   color: var(--ss-text);
@@ -145,7 +146,9 @@
   width: 34px;
   border-radius: 0 999px 999px 0;
   color: var(--ss-muted);
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .ss-dl-main:hover:not(:disabled),

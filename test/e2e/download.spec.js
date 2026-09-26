@@ -15,12 +15,18 @@ async function recordDownloads(serviceWorker) {
     names: () => serviceWorker.evaluate(() => globalThis.__requested),
     completed: () =>
       serviceWorker.evaluate(async () =>
-        (await chrome.downloads.search({ state: "complete" })).map((d) => ({ mime: d.mime, size: d.fileSize })),
+        (await chrome.downloads.search({ state: "complete" })).map((d) => ({
+          mime: d.mime,
+          size: d.fileSize,
+        })),
       ),
   };
 }
 
-test("download from the player: progress ring, collapse, Saved, correct .mp4", async ({ context, serviceWorker }, testInfo) => {
+test("download from the player: progress ring, collapse, Saved, correct .mp4", async ({
+  context,
+  serviceWorker,
+}, testInfo) => {
   const downloads = await recordDownloads(serviceWorker);
   const { page, frame } = await openLecture(context, { slow: true });
   const control = frame.locator("#swiftskip-download");
