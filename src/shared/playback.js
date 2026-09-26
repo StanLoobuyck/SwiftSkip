@@ -69,11 +69,18 @@ export function isResumable(time, duration) {
   return true;
 }
 
+// Kaltura's id for a recording ("0_ab12cd34"), found in its page and stream
+// URLs; null if there is none.
+export function kalturaEntryId(text) {
+  const entry = /entry_?id[/=]([01]_[a-z0-9]+)/i.exec(text || "");
+  return entry ? entry[1].toLowerCase() : null;
+}
+
 // Stable per-lecture key: Kaltura's entry id when we can find it (the same
 // lecture opened from different pages), else this page + the video's length.
 export function resumeKey({ pageUrl, manifestUrl, duration }) {
-  const entry = /entry_?id[/=]([01]_[a-z0-9]+)/i.exec(`${pageUrl} ${manifestUrl || ""}`);
-  if (entry) return `kaltura:${entry[1].toLowerCase()}`;
+  const entry = kalturaEntryId(`${pageUrl} ${manifestUrl || ""}`);
+  if (entry) return `kaltura:${entry}`;
   const url = new URL(pageUrl);
   return `page:${url.host}${url.pathname}:${Math.round(duration || 0)}`;
 }

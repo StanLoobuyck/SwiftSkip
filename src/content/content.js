@@ -22,6 +22,7 @@ import {
   formatSpeed,
   formatTime,
   isResumable,
+  kalturaEntryId,
   nextSpeed,
   resumeKey,
 } from "../shared/playback.js";
@@ -64,6 +65,7 @@ import { createDownloadControl } from "./download-control.js";
   function retire() {
     if (retired) return;
     retired = true;
+    stopWatchingPage();
     for (const el of [downloadWrapEl, osdEl]) el?.remove();
     closeShortcutSheet();
   }
@@ -99,14 +101,15 @@ import { createDownloadControl } from "./download-control.js";
     barFillEl = null;
   let currentOsdType = null;
   let detectedLectureUrl = null;
+  let detectedEntryId = null; // Kaltura entry of detectedLectureUrl, if any
   let downloadControl = null; // see download-control.js
   let downloadWrapEl = null; // downloadControl.el
   let downloadResetTimer = null;
   let activeDownloadJobId = null;
   let hlsPerformanceObserver = null;
-  let hlsMutationObserver = null;
-  let hlsVideoPoll = null;
-  let hlsDebounceTimer = null;
+  let pageObserver = null;
+  let pageScanTimer = null;
+  let pageFallbackTimer = null;
 
   // ─── Video finder (walks Shadow DOM) ───────────────────────────────────────
   function findVideos(root = document) {
@@ -126,23 +129,12 @@ import { createDownloadControl } from "./download-control.js";
     );
   }
 
-  function stopHlsDetection() {
-    if (hlsPerformanceObserver) {
-      hlsPerformanceObserver.disconnect();
-      hlsPerformanceObserver = null;
-    }
-    if (hlsMutationObserver) {
-      hlsMutationObserver.disconnect();
-      hlsMutationObserver = null;
-    }
-    if (hlsVideoPoll) {
-      clearInterval(hlsVideoPoll);
-      hlsVideoPoll = null;
-    }
-    if (hlsDebounceTimer) {
-      clearTimeout(hlsDebounceTimer);
-      hlsDebounceTimer = null;
-    }
+  function stopWatchingPage() {
+    hlsPerformanceObserver?.disconnect();
+    pageObserver?.disconnect();
+    clearTimeout(pageScanTimer);
+    clearInterval(pageFallbackTimer);
+    hlsPerformanceObserver = pageObserver = pageScanTimer = pageFallbackTimer = null;
   }
 
   function getPageTitle() {
@@ -156,10 +148,23 @@ import { createDownloadControl } from "./download-control.js";
     return document.title;
   }
 
+  // The first playlist seen is the lecture's (master) playlist; the player
+  // then loads its variant playlists, which belong to the same lecture. Only
+  // a playlist of a different Kaltura entry means the player switched to
+  // another lecture without reloading.
   function rememberLectureUrl(url) {
     if (!isLectureManifestUrl(url)) return false;
+    const entryId = kalturaEntryId(url);
+    if (detectedLectureUrl && (!entryId || entryId === detectedEntryId)) return false;
 
+    const switched = Boolean(detectedLectureUrl);
     detectedLectureUrl = url;
+    detectedEntryId = entryId;
+    // A finished/failed download shown for the previous lecture is stale now.
+    if (switched && downloadControl && downloadControl.mode !== "busy") {
+      clearTimeout(downloadResetTimer);
+      downloadControl.reset();
+    }
     injectDownloadButton();
 
     chrome.runtime.sendMessage({
@@ -167,39 +172,26 @@ import { createDownloadControl } from "./download-control.js";
       url: detectedLectureUrl,
       title: getPageTitle(),
     });
-    stopHlsDetection();
     return true;
   }
 
   function scanPerformanceEntries(entries) {
-    for (const entry of entries) {
-      if (rememberLectureUrl(entry.name)) return true;
-    }
-    return false;
+    for (const entry of entries) rememberLectureUrl(entry.name);
   }
 
-  function scanVideoSources() {
-    const videos = findVideos();
-
+  function scanVideoSources(videos) {
     for (const video of videos) {
       const candidates = [
         video.currentSrc,
         video.src,
         ...[...video.querySelectorAll("source")].map((source) => source.src),
       ];
-
-      for (const candidate of candidates) {
-        if (rememberLectureUrl(candidate)) return true;
-      }
+      for (const candidate of candidates) rememberLectureUrl(candidate);
     }
-
-    return false;
   }
 
   function startHlsDetection() {
     scanPerformanceEntries(performance.getEntriesByType("resource"));
-    if (detectedLectureUrl) return;
-
     try {
       hlsPerformanceObserver = new PerformanceObserver((list) => {
         scanPerformanceEntries(list.getEntries());
@@ -208,20 +200,34 @@ import { createDownloadControl } from "./download-control.js";
     } catch (e) {
       /* PerformanceObserver can be unavailable in restricted frames. */
     }
+  }
 
-    hlsVideoPoll = setInterval(scanVideoSources, 1000);
-    hlsMutationObserver = new MutationObserver(() => {
-      clearTimeout(hlsDebounceTimer);
-      hlsDebounceTimer = setTimeout(scanVideoSources, 500);
-    });
-    hlsMutationObserver.observe(document.documentElement, {
+  // ─── Watching the page for videos ──────────────────────────────────────────
+  // Finding videos means walking the whole DOM (shadow roots included), which
+  // adds up on big pages like Toledo's. So: at most once a second after the
+  // page changes, plus a slow fallback for changes inside shadow DOM (which
+  // the observer can't see), and nothing while the tab is hidden.
+  function scanPage() {
+    pageScanTimer = null;
+    if (isRetired() || document.hidden) return;
+    trackVideos();
+  }
+
+  function schedulePageScan() {
+    if (!pageScanTimer) pageScanTimer = setTimeout(scanPage, 1000);
+  }
+
+  function startWatchingPage() {
+    pageObserver = new MutationObserver(schedulePageScan);
+    pageObserver.observe(document.documentElement, {
       childList: true,
       subtree: true,
       attributes: true,
       attributeFilter: ["src"],
     });
-
-    scanVideoSources();
+    pageFallbackTimer = setInterval(schedulePageScan, 3000);
+    document.addEventListener("visibilitychange", () => document.hidden || schedulePageScan());
+    scanPage();
   }
 
   function createDownloadJobId() {
@@ -578,12 +584,18 @@ import { createDownloadControl } from "./download-control.js";
     const v = getVideo();
     if (!v) return;
 
+    // The player's own button keeps its UI in sync. Matched on its label
+    // (English/Dutch), as a whole word: not "Replay", "Autoplay",
+    // "Playback speed", "Play next", or a class name like "playkit-…".
     const container = getPlayerContainer(v);
     let playBtn = null;
     const btns = container.querySelectorAll('button, [role="button"]');
     for (const b of btns) {
-      const label = (b.title || b.getAttribute("aria-label") || b.className || "").toLowerCase();
-      if (label.includes("play") || label.includes("pause")) {
+      const label = (b.getAttribute("aria-label") || b.title || "").toLowerCase();
+      if (
+        /\b(play|pause|afspelen|pauzeren|pauze)\b/.test(label) &&
+        !/\b(next|previous|volgende|vorige)\b/.test(label)
+      ) {
         playBtn = b;
         break;
       }
@@ -824,6 +836,18 @@ import { createDownloadControl } from "./download-control.js";
     }
   }
 
+  function isDescendant(win) {
+    try {
+      for (let w = win; w && w !== w.top;) {
+        w = w.parent;
+        if (w === window) return true;
+      }
+    } catch {
+      /* frame went away */
+    }
+    return false;
+  }
+
   function isAncestor(win) {
     for (let w = window; w !== window.top;) {
       w = w.parent;
@@ -842,7 +866,7 @@ import { createDownloadControl } from "./download-control.js";
   window.addEventListener("message", (event) => {
     const data = event.data;
     if (!data || typeof data !== "object" || !data[RELAY] || isRetired()) return;
-    if (data[RELAY] === "player" && event.source !== window) {
+    if (data[RELAY] === "player" && isDescendant(event.source)) {
       playerWindow = event.source;
     } else if (data[RELAY] === "hello" && isAncestor(event.source)) {
       if (getVideo()) announcePlayer();
@@ -941,18 +965,21 @@ import { createDownloadControl } from "./download-control.js";
     v.addEventListener("play", wakeDownloadControl);
     v.addEventListener("seeked", save);
     v.addEventListener("ended", () => key && clearResumePosition(key).catch(() => {}));
+    // The stream URL, if the video plays HLS itself (src="….m3u8"): now, and
+    // after a new source. The next "playing" after a new source starts over
+    // with that lecture's resume key and speed.
+    scanVideoSources([v]);
+    v.addEventListener("loadstart", () => scanVideoSources([v]));
+    v.addEventListener("emptied", () => {
+      started = false;
+      key = null;
+    });
     window.addEventListener("pagehide", save);
     document.addEventListener("visibilitychange", () => document.hidden && save());
   }
 
-  trackVideos();
-  const videoTimer = setInterval(() => {
-    // After an extension update this old copy is cut off; stop quietly.
-    if (isRetired()) return clearInterval(videoTimer);
-    trackVideos();
-  }, 2000);
-
   startHlsDetection();
+  startWatchingPage();
 
   // ─── Lecture context (top-level Toledo page only) ──────────────────────────
   // The player lives in a cross-origin Kaltura iframe that only knows the

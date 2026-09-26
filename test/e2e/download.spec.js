@@ -73,3 +73,27 @@ test("the collapsed state is remembered", async ({ context }) => {
   await expect(again.locator(".ss-dl-orb")).toBeVisible({ timeout: 15_000 });
   await expect(again.locator(".ss-dl-pill")).toBeHidden();
 });
+
+// A player that switches lectures without reloading: the download follows the
+// new lecture, while the playlists the player loads for the current one don't
+// replace its (master) playlist.
+test("a lecture switch inside the player moves the download to the new lecture", async ({
+  context,
+  serviceWorker,
+}) => {
+  const { frame } = await openLecture(context);
+  const storedUrl = () =>
+    serviceWorker.evaluate(async () => {
+      const stored = await chrome.storage.session.get(null);
+      return Object.entries(stored).find(([key]) => key.startsWith("tab:"))?.[1].url;
+    });
+  await expect.poll(storedUrl).toMatch(/\/media\/hls\/index\.m3u8$/);
+
+  await frame.evaluate(() => fetch("media/hls/index.m3u8?entryId=0_second"));
+  await expect.poll(storedUrl).toMatch(/entryId=0_second$/);
+
+  // Same entry again (a variant playlist): stays on the first URL of that lecture.
+  await frame.evaluate(() => fetch("media/hls/index.m3u8?entryId=0_second&variant=720"));
+  await frame.waitForTimeout(500);
+  expect(await storedUrl()).toMatch(/entryId=0_second$/);
+});

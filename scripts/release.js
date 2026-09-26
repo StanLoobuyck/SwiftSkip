@@ -12,10 +12,13 @@
 //    Version-less names, so .../releases/latest/download/<name> always works.
 // 5. only then points updates.json at the new .xpi (commit + push), so
 //    Firefox never sees an update before its file exists.
+//
+// If a release stops halfway (signing, network, gh), fix the cause and run
+// the same command again: it picks up from where it stopped.
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { signFirefox } from "./sign.js";
@@ -49,10 +52,31 @@ if (!/^\d+\.\d+\.\d+$/.test(version || "")) fail("Usage: npm run release <versio
 step("Checking the repository");
 if (git("status", "--porcelain")) fail("Commit or stash your changes first.");
 if (git("rev-parse", "--abbrev-ref", "HEAD") !== "main") fail("Release from the main branch.");
-git("fetch", "--quiet", "origin");
-if (git("rev-parse", "HEAD") !== git("rev-parse", "origin/main"))
+git("fetch", "--quiet", "--tags", "origin");
+// Commits on main that aren't on origin yet: only this release's own version
+// commit is fine (left behind by an earlier run that stopped).
+const unpushed = git("log", "--format=%s", "origin/main..HEAD").split("\n").filter(Boolean);
+const behind = git("rev-list", "--count", "HEAD..origin/main") !== "0";
+if (behind || unpushed.some((subject) => subject !== `Release ${version}`))
   fail("main differs from origin/main: pull/push first.");
-if (git("tag", "--list", `v${version}`)) fail(`Tag v${version} already exists.`);
+
+// An earlier run of this release that got as far as tagging: carry on, as
+// long as the tag is this commit and the GitHub Release doesn't exist yet.
+const tagged = Boolean(git("tag", "--list", `v${version}`));
+if (tagged) {
+  if (git("rev-parse", `v${version}^{commit}`) !== git("rev-parse", "HEAD"))
+    fail(`Tag v${version} already exists (on another commit).`);
+  if (released(version)) fail(`SwiftSkip ${version} is already released.`);
+}
+
+function released(v) {
+  try {
+    execFileSync("gh", ["release", "view", `v${v}`, "--repo", REPO], { stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const pkgPath = join(ROOT, "package.json");
 const current = JSON.parse(readFileSync(pkgPath, "utf8")).version;
@@ -75,16 +99,17 @@ const section = new RegExp(
 if (!section || !section[1].trim()) fail(`Add a "## ${version}" section to CHANGELOG.md first.`);
 const notes = section[1].trim();
 
-// ─── 2. Version, tests, builds ────────────────────────────────────────────────
+// ─── 2. Tests, version, builds ────────────────────────────────────────────────
+
+// Before the version commit, so failing tests leave nothing behind.
+step("Running the tests");
+run("npm", ["test", "--silent"], { quiet: true });
 
 if (version !== current) {
   step(`Setting version ${version}`);
   run("npm", ["version", version, "--no-git-tag-version"], { quiet: true });
   if (!dryRun) git("commit", "-q", "-am", `Release ${version}`);
 }
-
-step("Running the tests");
-run("npm", ["test", "--silent"], { quiet: true });
 
 step("Building every browser");
 run(process.execPath, ["scripts/build.js", "all", "--zip"]);
@@ -106,12 +131,18 @@ if (dryRun) {
 
 // ─── 3. Sign ──────────────────────────────────────────────────────────────────
 
-step("Signing the Firefox build with Mozilla (takes a few minutes)");
-let signed;
-try {
-  signed = await signFirefox();
-} catch (error) {
-  fail(`${error.message}\nThe version commit is still local; fix the problem and run the release again.`);
+// Mozilla signs a version only once, so a signed file from an earlier run of
+// this release is reused.
+let signed = join(ROOT, "web-ext-artifacts", `swiftskip-firefox-${version}-signed.xpi`);
+if (existsSync(signed)) {
+  step("Using the Firefox build Mozilla already signed");
+} else {
+  step("Signing the Firefox build with Mozilla (takes a few minutes)");
+  try {
+    signed = await signFirefox();
+  } catch (error) {
+    fail(`${error.message}\nFix the problem and run "npm run release ${version}" again.`);
+  }
 }
 const xpi = join(assets, "swiftskip-firefox.xpi");
 copyFileSync(signed, xpi);
@@ -120,7 +151,7 @@ const hash = createHash("sha256").update(readFileSync(xpi)).digest("hex");
 // ─── 4. Tag + GitHub Release ──────────────────────────────────────────────────
 
 step(`Tagging v${version} and pushing`);
-git("tag", "-a", `v${version}`, "-m", `SwiftSkip ${version}`);
+if (!tagged) git("tag", "-a", `v${version}`, "-m", `SwiftSkip ${version}`);
 run("git", ["push", "--quiet", "origin", "main", `v${version}`]);
 
 step("Creating the GitHub Release");

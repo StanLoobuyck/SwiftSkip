@@ -43,7 +43,14 @@ test("formatSkipTotal", () => {
   assert.equal(formatSkipTotal(0.3), "0s");
 });
 
-import { formatSpeed, formatTime, isResumable, nextSpeed, resumeKey } from "../src/shared/playback.js";
+import {
+  formatSpeed,
+  formatTime,
+  isResumable,
+  kalturaEntryId,
+  nextSpeed,
+  resumeKey,
+} from "../src/shared/playback.js";
 
 test("nextSpeed steps on a 0.25 grid, within 0.25–4", () => {
   assert.equal(nextSpeed(1, +1, 0.25), 1.25);
@@ -107,4 +114,19 @@ test("resumeKey prefers Kaltura's entry id", () => {
     resumeKey({ pageUrl: "http://localhost:8123/?toolTitle=x", duration: 120.08 }),
     "page:localhost:8123/:120",
   );
+});
+
+test("kalturaEntryId finds the recording in page and stream URLs", () => {
+  assert.equal(
+    kalturaEntryId("https://cdn/p/1/playManifest/entryId/0_AbC123/format/applehttp/a.m3u8"),
+    "0_abc123",
+  );
+  assert.equal(
+    kalturaEntryId(
+      "https://cfvod.kaltura.com/hls/p/1/sp/100/serveFlavor/entryId/1_x9/v/1/flavorId/0_f/index.m3u8",
+    ),
+    "1_x9",
+  );
+  assert.equal(kalturaEntryId("https://example.edu/video/index.m3u8"), null);
+  assert.equal(kalturaEntryId(null), null);
 });

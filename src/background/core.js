@@ -15,6 +15,31 @@ export { ext };
 
 const tabStates = new Map();
 
+// Chrome stops the MV3 service worker after ~30 s without events, taking this
+// Map with it, while the content script reports the lecture only once. So each
+// tab's state is also kept in storage.session (cleared when the browser
+// closes) and read back when the worker starts again.
+const SESSION_PREFIX = "tab:";
+
+const restored = (async () => {
+  try {
+    const stored = await ext.storage.session.get(null);
+    for (const [key, state] of Object.entries(stored)) {
+      if (key.startsWith(SESSION_PREFIX) && !tabStates.has(state.tabId)) tabStates.set(state.tabId, state);
+    }
+  } catch {
+    // No storage.session (older browsers): state only lives in memory.
+  }
+})();
+
+function persistState(state) {
+  ext.storage.session?.set({ [SESSION_PREFIX + state.tabId]: state }).catch(() => {});
+}
+
+function forgetState(tabId) {
+  ext.storage.session?.remove(SESSION_PREFIX + tabId).catch(() => {});
+}
+
 function createState(tabId) {
   return {
     tabId,
@@ -67,8 +92,9 @@ function publishDownloadState(state) {
     });
 }
 
-function setDownloadState(tabId, patch) {
+function setDownloadState(tabId, patch, { persist = true } = {}) {
   const state = Object.assign(getState(tabId), patch);
+  if (persist) persistState(state);
   publishDownloadState(state);
   return { ...state };
 }
@@ -79,15 +105,21 @@ export function reportProgress(progress) {
   if (progress.jobId && state.jobId && progress.jobId !== state.jobId) return;
 
   const numberOr = (value, fallback) => (Number.isFinite(value) ? value : fallback);
-  setDownloadState(progress.tabId, {
-    phase: progress.phase || state.phase,
-    downloaded: numberOr(progress.downloaded, state.downloaded),
-    total: numberOr(progress.total, state.total),
-    percent: numberOr(progress.percent, state.percent),
-    speed: numberOr(progress.speed, 0),
-    eta: numberOr(progress.eta, null),
-    active: !["Complete", "Canceled"].includes(progress.phase),
-  });
+  const phase = progress.phase || state.phase;
+  setDownloadState(
+    progress.tabId,
+    {
+      phase,
+      downloaded: numberOr(progress.downloaded, state.downloaded),
+      total: numberOr(progress.total, state.total),
+      percent: numberOr(progress.percent, state.percent),
+      speed: numberOr(progress.speed, 0),
+      eta: numberOr(progress.eta, null),
+      active: !["Complete", "Canceled"].includes(progress.phase),
+    },
+    // Progress arrives several times a second; storing every step isn't needed.
+    { persist: phase !== state.phase },
+  );
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -219,7 +251,9 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
     // From the top-level Toledo page: which course/lecture this tab shows.
     registerLectureContext(msg, sender) {
       const tabId = tabOf(msg, sender);
-      getState(tabId).context = { course: msg.course || null, lecture: msg.lecture || null };
+      const state = getState(tabId);
+      state.context = { course: msg.course || null, lecture: msg.lecture || null };
+      persistState(state);
       return { ok: true };
     },
 
@@ -258,33 +292,26 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
   };
 
   // sendResponse + `return true` is the one async-reply style that works in
-  // Chrome, Firefox and Safari alike.
+  // Chrome, Firefox and Safari alike. Every handler waits for the stored tab
+  // states, so a worker that just woke up doesn't answer from an empty Map.
   ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const handler = msg && msg.action && handlers[msg.action];
     if (!handler) return false;
 
-    let result;
-    try {
-      result = handler(msg, sender);
-    } catch (error) {
-      sendResponse({ ok: false, error: errorMessage(error) });
-      return false;
-    }
-
-    if (result && typeof result.then === "function") {
-      result.then(sendResponse, (error) => sendResponse({ ok: false, error: errorMessage(error) }));
-      return true;
-    }
-    if (result !== undefined) sendResponse(result);
-    return false;
+    restored
+      .then(() => handler(msg, sender))
+      .then(sendResponse, (error) => sendResponse({ ok: false, error: errorMessage(error) }));
+    return true;
   });
 
-  ext.tabs.onRemoved.addListener((tabId) => {
+  ext.tabs.onRemoved.addListener(async (tabId) => {
+    await restored;
     const state = tabStates.get(tabId);
     if (state && state.active && state.jobId) {
       Promise.resolve(cancelDownload(state.jobId)).catch(() => {});
     }
     tabStates.delete(tabId);
+    forgetState(tabId);
   });
 
   startSiteManagement();

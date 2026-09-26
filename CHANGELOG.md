@@ -3,6 +3,14 @@
 All notable changes to SwiftSkip. Versions follow [semantic versioning](https://semver.org/):
 **major** for big changes, **minor** for new features, **patch** for fixes.
 
+## 4.0.1
+
+**Fixed**
+- Chrome: downloads kept their full name (course – lecture – date), and the menu kept showing the lecture, after the lecture had been open for a while
+- A player that switches to another lecture without reloading now downloads and resumes that lecture, not the first one
+- Much less work in the background on big Toledo pages, and none in hidden tabs
+- Play/pause no longer risks pressing another player button (like *Replay*)
+
 ## 4.0.0
 
 A complete rework: one codebase for every browser, a new look, and many new features.
