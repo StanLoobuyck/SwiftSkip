@@ -278,7 +278,7 @@ export function startBackground({ runDownload, cancelDownload, extraHandlers = {
   });
 
   startSiteManagement();
-  if (__DEV__) devReloadTestPages();
+  if (__DEV_RELOAD__) devReloadTestPages();
 
   // First install: a short welcome (not for dev builds, which "install" on
   // every npm run dev:*).

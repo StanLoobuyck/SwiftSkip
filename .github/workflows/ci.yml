@@ -1,5 +1,6 @@
-# Runs on every push and pull request: tests, Mozilla lint, and a build of
-# all three browser versions (downloadable from the run's "Artifacts").
+# Runs on every push and pull request.
+#   check: unit tests, lint (ESLint, Prettier, Mozilla), build all browsers
+#   e2e:   the Chrome build in a real browser (Playwright), in parallel
 name: CI
 
 on:
@@ -17,6 +18,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # For the real TS → MP4 conversion test.
+      - run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - run: npm test
       - run: npm run lint
       - run: npm run build
@@ -24,3 +27,25 @@ jobs:
         with:
           name: swiftskip-builds
           path: web-ext-artifacts/*.zip
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Test media for the local test pages.
+      - run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

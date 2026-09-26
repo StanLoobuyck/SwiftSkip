@@ -6,6 +6,9 @@
 // --watch  rebuild whenever something in src/ changes
 // --watch-only  like --watch, but skip the initial build (dev.js already did it)
 // --zip    write web-ext-artifacts/swiftskip-<browser>-<version>.zip
+// --out <dir>  build into <dir> instead of dist/<browser> (one target only; e2e tests)
+// --no-dev-reload  dev build without reloading open test pages on start (e2e tests:
+//                  that reload would race with the test navigating)
 
 import { watch } from "node:fs";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -20,7 +23,9 @@ export const TARGETS = ["firefox", "chrome", "safari"];
 
 const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith("--")));
-const targetArg = args.find((a) => !a.startsWith("--")) || "all";
+const outIndex = args.indexOf("--out");
+const outOverride = outIndex !== -1 ? args[outIndex + 1] : null;
+const targetArg = args.find((a, i) => !a.startsWith("--") && i !== outIndex + 1) || "all";
 const dev = flags.has("--dev");
 const watching = flags.has("--watch") || flags.has("--watch-only");
 
@@ -37,7 +42,7 @@ const pkg = JSON.parse(await readFile(join(ROOT, "package.json"), "utf8"));
 let firstBuild = true;
 
 async function buildTarget(target) {
-  const out = join(ROOT, "dist", target);
+  const out = outOverride ? join(ROOT, outOverride) : join(ROOT, "dist", target);
   // Only wipe on the first build: in watch mode a running browser is loading
   // from this folder, and a briefly missing manifest would break its reload.
   if (firstBuild) await rm(out, { recursive: true, force: true });
@@ -66,6 +71,7 @@ async function buildTarget(target) {
     define: {
       __BROWSER__: JSON.stringify(target),
       __DEV__: JSON.stringify(dev),
+      __DEV_RELOAD__: JSON.stringify(dev && !flags.has("--no-dev-reload")),
     },
     logLevel: "warning",
   });

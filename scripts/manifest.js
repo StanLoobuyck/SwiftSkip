@@ -56,12 +56,15 @@ export function buildManifest(target, { version, dev }) {
         browser_specific_settings: {
           gecko: {
             id: "swiftskip@stanloobuyck.github.io",
-            strict_min_version: "109.0",
+            // 140 = current ESR; needed for data_collection_permissions (and :has() in CSS).
+            strict_min_version: "140.0",
             // SwiftSkip sends no data anywhere (required by addons.mozilla.org).
             data_collection_permissions: { required: ["none"] },
             // Self-hosted updates (the add-on is signed "unlisted", not on AMO).
             ...(dev ? {} : { update_url: UPDATE_URL }),
           },
+          // Firefox for Android got data_collection_permissions in 142.
+          gecko_android: { strict_min_version: "142.0" },
         },
         permissions: [...permissions, "downloads", ...hosts],
         optional_permissions: OPTIONAL_HOSTS,
@@ -73,6 +76,8 @@ export function buildManifest(target, { version, dev }) {
       return {
         manifest_version: 3,
         ...base,
+        // 116: runtime.getContexts (offscreen document check).
+        minimum_chrome_version: "116",
         permissions: [...permissions, "downloads", "offscreen"],
         host_permissions: hosts,
         optional_host_permissions: OPTIONAL_HOSTS,

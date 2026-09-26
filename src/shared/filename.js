@@ -5,6 +5,7 @@ const MAX_LENGTH = 100;
 export function sanitizeFilename(title) {
   const fallback = "lecture";
   let safeTitle = String(title || fallback)
+    // eslint-disable-next-line no-control-regex -- control characters are exactly what we strip
     .replace(/[\x00-\x1f]/g, " ") // tabs, newlines, …
     .replace(/\s*:\s*/g, " - ") // "Les 1: intro" reads better as "Les 1 - intro"
     .replace(/[<>"/\\|?*]/g, "_")

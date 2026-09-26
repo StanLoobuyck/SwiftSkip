@@ -1,0 +1,11 @@
+dist/
+dist-e2e/
+web-ext-artifacts/
+node_modules/
+.profiles/
+test/fixtures/media/
+playwright-report/
+test-results/
+package-lock.json
+# Hand-written docs (tables, line breaks) stay as they are.
+*.md

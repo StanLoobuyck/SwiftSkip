@@ -19,3 +19,8 @@ test/fixtures/media/
 
 # Editor lock files (LibreOffice etc.)
 .~lock.*
+
+# End-to-end tests
+dist-e2e/
+playwright-report/
+test-results/

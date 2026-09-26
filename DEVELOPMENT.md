@@ -15,8 +15,10 @@ npm install
 |---|---|
 | `npm run dev:firefox` | Opens Zen (or Firefox) with the dev build loaded and the local test page open. Every save in `src/` rebuilds and reloads the extension. |
 | `npm run dev:chrome` | Same in Chromium / Chrome / Brave (`sudo pacman -S chromium`). |
-| `npm test` | Unit tests (playlist parsing, downloader, filenames, manifests). |
-| `npm run lint` | Mozilla's checker on the Firefox build (same one addons.mozilla.org runs). |
+| `npm test` | Unit tests (~1 s): playlist parsing, downloader, shortcuts, settings, i18n, … |
+| `npm run test:e2e` | Browser tests (~40 s): the Chrome build on the local test pages with Playwright — shortcuts, resume, downloads, popup, settings, updates. First time: `npx playwright install chromium`. |
+| `npm run lint` | ESLint (mistakes), Prettier (formatting) and Mozilla's add-on checker. |
+| `npm run format` | Formats all code with Prettier. |
 | `npm run build` | Release builds for all browsers + zips in `web-ext-artifacts/`. |
 
 The dev browsers use their own profiles in `.profiles/` that are kept between
@@ -46,18 +48,27 @@ generated with ffmpeg on first run (`npm run fixtures` to redo it).
 
 ```
 src/
-  background/core.js      download state + message handling (all browsers)
-  background/firefox.js   runs the download in the background page
-  background/chrome.js    runs it in the offscreen document (MV3 worker can't make blobs)
-  background/safari.js    downloads disabled (Safari has no downloads API)
-  offscreen/              Chrome only
-  content/                keybinds, on-screen overlay, download button
-  popup/                  toolbar popup
-  shared/                 code used in several places (settings, HLS parsing, downloader)
+  background/core.js        download state per tab + message handling (all browsers)
+  background/sites.js       sites the user enabled; injecting into open tabs after install/update
+  background/firefox.js     runs the download in the (persistent) background page
+  background/chrome.js      runs it in the offscreen document (MV3 worker can't make blobs)
+  background/safari.js      downloads disabled (Safari has no downloads API)
+  offscreen/                Chrome only
+  content/content.js        shortcuts, overlay, resume/speed memory, player↔page relay
+  content/download-control.js   the in-player Download button / ring / card
+  content/overlays.js       "?" shortcut sheet and the "Resumed at …" toast
+  content/style.css         all in-player styles (one shared "glass" look)
+  popup/  options/  welcome/    extension pages (share ui/ui.css)
+  i18n/en.json, nl.json     every UI text (see shared/i18n.js)
+  _locales/                 only the manifest description, for the browser's add-on list
+  shared/                   pure logic, unit-tested: shortcuts, settings, playback math,
+                            HLS parsing, downloader, filenames, sites, i18n
 scripts/
-  manifest.js             per-browser manifest.json
-  build.js / dev.js       build + dev mode
-test/                     npm test
+  manifest.js               per-browser manifest.json
+  build.js / dev.js         build + dev mode (auto-reload, local test pages)
+  sign.js / release.js      Mozilla signing, full release
+test/                       unit tests (npm test); fixtures/ = local test pages
+updates.json                Firefox/Zen auto-update manifest (written by release.js)
 ```
 
 `__BROWSER__` (`"firefox"`, `"chrome"`, `"safari"`) and `__DEV__` are

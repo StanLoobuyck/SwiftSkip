@@ -19,7 +19,7 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 
 - [x] Download button and on-screen overlay positioned over the player, not the window (test page / non-iframe players)
 - [x] Don't keep the whole lecture in RAM (store segments as Blobs so the browser can page them to disk)
-- [ ] 🔍 Check memory use on a real 2-hour lecture
+- [x] Real 2-hour lectures download fine (checked by Stan, Sept 2026)
 - [x] Output `.mp4` instead of `.ts` (remux with mux.js; falls back to `.ts` if that fails)
 - [x] Retry failed segments (3× with backoff) and fetch 4 in parallel
 - [x] Clear error message instead of saving a useless `.m3u8`
@@ -67,10 +67,10 @@ Items marked 🔍 first need a look at a real Toledo lecture page.
 
 ## Phase 5 — Testing & code quality
 
-- [ ] Unit tests for key matching and speed steps (split out of `content.js`)
-- [ ] Playwright end-to-end tests on the test page, in CI
-- [ ] Sanitized real Kaltura page as a test fixture
-- [ ] ESLint + Prettier
+- [x] Unit tests for key matching, speed steps, settings, i18n, sites, … (78 tests, `npm test`)
+- [x] Playwright end-to-end tests (18, `npm run test:e2e`): shortcuts incl. relay + AZERTY, resume, remembered speed, downloads (progress, collapse, cancel, file name), popup (EN/NL), settings page, release build scope, updates without reload — in CI on every push
+- [x] Toledo-style test pages (player in an iframe, breadcrumb, toolTitle) instead of a copy of a real Kaltura page (which would contain session tokens)
+- [x] ESLint + Prettier
 
 ## Phase 6 — Sharing with friends (no public stores)
 

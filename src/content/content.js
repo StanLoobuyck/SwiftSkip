@@ -14,7 +14,6 @@ import {
 } from "../shared/storage.js";
 import { NO_REPEAT, buildShortcutMap, findAction } from "../shared/shortcuts.js";
 import { isLectureManifestUrl } from "../shared/hls.js";
-import { formatProgressMeta } from "../shared/format.js";
 import {
   MAX_SPEED,
   accumulateSkip,
@@ -27,7 +26,7 @@ import {
   resumeKey,
 } from "../shared/playback.js";
 import { parseCourseTitle } from "../shared/filename.js";
-import { errorText, phaseLabel, setLanguage, t } from "../shared/i18n.js";
+import { setLanguage, t } from "../shared/i18n.js";
 import {
   closeShortcutSheet,
   isShortcutSheetOpen,

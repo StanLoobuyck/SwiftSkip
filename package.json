@@ -1,6 +1,12 @@
 {
   "name": "swiftskip",
   "version": "4.0.0",
+  "description": "Keyboard shortcuts, resume, speed memory and downloads for Toledo (KU Leuven) and other Kaltura lecture recordings.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StanLoobuyck/SwiftSkip.git"
+  },
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,13 +17,15 @@
     "dev:firefox": "node scripts/dev.js firefox",
     "dev:chrome": "node scripts/dev.js chrome",
     "test": "node --test \"test/*.test.js\"",
-    "lint": "node scripts/build.js firefox && web-ext lint --self-hosted --source-dir dist/firefox",
+    "lint": "eslint . && prettier --check . && node scripts/build.js firefox && web-ext lint --self-hosted --source-dir dist/firefox",
     "fixtures": "node scripts/fixtures.js",
     "sign": "node scripts/sign.js",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "test:e2e": "playwright test",
+    "format": "prettier --write ."
   },
   "devDependencies": {
-    "@resvg/resvg-js": "^2.6.2",
+    "@playwright/test": "^1.63.0",
     "esbuild": "^0.28.2",
     "web-ext": "^10.7.0"
   },
