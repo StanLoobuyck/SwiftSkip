@@ -6,6 +6,11 @@
           "version": "4.0.0",
           "update_link": "https://github.com/StanLoobuyck/SwiftSkip/releases/download/v4.0.0/swiftskip-firefox.xpi",
           "update_hash": "sha256:3bd4e38839b608bcdf32adc05fbb72a8ee347fd5512273714c668c2b57f90cf4"
+        },
+        {
+          "version": "4.0.1",
+          "update_link": "https://github.com/StanLoobuyck/SwiftSkip/releases/download/v4.0.1/swiftskip-firefox.xpi",
+          "update_hash": "sha256:bd5624852fbb39ef0bb89e70de1a2624e07befc2d6aea3ac4e2b25599aeef80c"
         }
       ]
     }
